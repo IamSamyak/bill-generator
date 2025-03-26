@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 class HomePage extends StatelessWidget {
   final VoidCallback onCreateBill;
+  final VoidCallback onHistory;
 
-  const HomePage({super.key, required this.onCreateBill});
+  const HomePage({super.key, required this.onCreateBill, required this.onHistory});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +21,7 @@ class HomePage extends StatelessWidget {
           _buildElevatedButton(Icons.payment, "Today's Collections", () {}),
           _buildElevatedButton(Icons.edit, 'Edit Details', () {}),
           _buildElevatedButton(Icons.report, 'Reports', () {}),
-          _buildElevatedButton(Icons.history, 'History', () {}),
+          _buildElevatedButton(Icons.history, 'History', onHistory ),
         ],
       ),
     );
