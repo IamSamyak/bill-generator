@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 class HistoryPage extends StatefulWidget {
   final VoidCallback onBack;
-  const HistoryPage({super.key, required this.onBack});
+  final List<Map<String, dynamic>> initialBills;
+
+  const HistoryPage({super.key, required this.onBack, required this.initialBills});
 
   @override
   _HistoryPageState createState() => _HistoryPageState();
@@ -13,17 +15,55 @@ class _HistoryPageState extends State<HistoryPage> {
   bool _isDescending = true;
 
   final List<String> _filters = ['All', 'Paid', 'Unpaid'];
+  Map<String, List<Map<String, dynamic>>> _bills = {};
 
-  final Map<String, List<Map<String, dynamic>>> _bills = {
-    'This Month': [
-      {'name': 'Ravi Kumar', 'date': '2024-07-25', 'amount': 1500, 'status': 'Paid'},
-      {'name': 'Sneha Verma', 'date': '2024-07-22', 'amount': 2300, 'status': 'Unpaid'},
-    ],
-    'Last Month': [
-      {'name': 'Amit Sharma', 'date': '2024-06-15', 'amount': 1800, 'status': 'Paid'},
-      {'name': 'Neha Joshi', 'date': '2024-06-10', 'amount': 2700, 'status': 'Unpaid'},
-    ],
-  };
+  @override
+  void initState() {
+    super.initState();
+    _categorizeBills();
+  }
+
+  void _categorizeBills() {
+    DateTime now = DateTime.now();
+    int currentMonth = now.month;
+    int currentYear = now.year;
+    int lastMonth = currentMonth == 1 ? 12 : currentMonth - 1;
+    int lastYear = currentMonth == 1 ? currentYear - 1 : currentYear;
+
+    Map<String, List<Map<String, dynamic>>> categorizedBills = {};
+
+    for (var bill in widget.initialBills) {
+      DateTime billDate = DateTime.parse(bill['date']);
+      int billMonth = billDate.month;
+      int billYear = billDate.year;
+
+      String category;
+      if (billMonth == currentMonth && billYear == currentYear) {
+        category = 'This Month';
+      } else if (billMonth == lastMonth && billYear == lastYear) {
+        category = 'Last Month';
+      } else {
+        category = '${_getMonthName(billMonth)} $billYear';
+      }
+
+      if (!categorizedBills.containsKey(category)) {
+        categorizedBills[category] = [];
+      }
+      categorizedBills[category]!.add(bill);
+    }
+
+    setState(() {
+      _bills = categorizedBills;
+    });
+  }
+
+  String _getMonthName(int month) {
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    return monthNames[month - 1];
+  }
 
   void _toggleSortOrder() {
     setState(() {
@@ -46,7 +86,6 @@ class _HistoryPageState extends State<HistoryPage> {
         padding: const EdgeInsets.all(8.0),
         child: Column(
           children: [
-            // Filter Buttons & Sorting
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -54,15 +93,15 @@ class _HistoryPageState extends State<HistoryPage> {
                   children: _filters.map((filter) {
                     bool isActive = _selectedFilter == filter;
                     return Padding(
-                      padding: const EdgeInsets.only(right: 6.0), // Reduced spacing
+                      padding: const EdgeInsets.only(right: 6.0),
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: isActive ? Colors.amber[700] : Colors.white,
                           foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // Reduced padding
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(6),
-                            side: BorderSide(color: Colors.grey.shade400), // Add border for white buttons
+                            side: BorderSide(color: Colors.grey.shade400),
                           ),
                           textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                         ),
@@ -76,8 +115,6 @@ class _HistoryPageState extends State<HistoryPage> {
                     );
                   }).toList(),
                 ),
-
-                // Sorting Button
                 IconButton(
                   onPressed: _toggleSortOrder,
                   icon: Icon(
@@ -88,8 +125,6 @@ class _HistoryPageState extends State<HistoryPage> {
               ],
             ),
             const SizedBox(height: 8),
-
-            // Bill List
             Expanded(
               child: ListView(
                 children: _bills.entries.map((entry) {
@@ -143,28 +178,6 @@ class _HistoryPageState extends State<HistoryPage> {
                   Text('Bill Date: ${bill['date']}'),
                 ],
               ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text('₹${bill['amount']}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: bill['status'] == 'Paid' ? Colors.green.shade100 : Colors.red.shade100,
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: Text(
-                    bill['status'],
-                    style: TextStyle(
-                      color: bill['status'] == 'Paid' ? Colors.green[800] : Colors.red[800],
-                      fontWeight: FontWeight.bold,
-                      fontSize: 11,
-                    ),
-                  ),
-                ),
-              ],
             ),
           ],
         ),

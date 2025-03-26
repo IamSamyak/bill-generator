@@ -1,3 +1,4 @@
+import 'package:bill_generator/pages/reports_page.dart';
 import 'package:flutter/material.dart';
 import 'package:bill_generator/pages/home_page.dart';
 import 'package:bill_generator/pages/create_bill_page.dart';
@@ -46,57 +47,50 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
-  bool _isCreateBillPage = false;
-  bool _isHistoryPage = false;
+  String _currentPage = 'Home';
 
-  void _goToCreateBill() {
-    setState(() {
-      _isCreateBillPage = true;
-      _isHistoryPage = false;
-    });
-  }
+  final List<Map<String, dynamic>> initialBills = [
+    {'name': 'Ravi Kumar', 'date': '2024-07-25', 'amount': 1500, 'status': 'Paid'},
+    {'name': 'Sneha Verma', 'date': '2024-07-22', 'amount': 2300, 'status': 'Unpaid'},
+    {'name': 'Amit Sharma', 'date': '2024-06-15', 'amount': 1800, 'status': 'Paid'},
+    {'name': 'Neha Joshi', 'date': '2024-06-10', 'amount': 2700, 'status': 'Unpaid'},
+    {'name': 'Rajesh Kumar', 'date': '2024-05-20', 'amount': 3200, 'status': 'Paid'},
+    {'name': 'Priya Mehta', 'date': '2024-04-18', 'amount': 2900, 'status': 'Unpaid'},
+  ];
 
-  void _goToHistory() {
+  void _navigateToPage(String page) {
     setState(() {
-      _isHistoryPage = true;
-      _isCreateBillPage = false;
-    });
-  }
-
-  void _goBackToHome() {
-    setState(() {
-      _isCreateBillPage = false;
-      _isHistoryPage = false;
-    });
-  }
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-      _isCreateBillPage = false;
-      _isHistoryPage = false;
+      _currentPage = page;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    Widget bodyWidget;
+    switch (_currentPage) {
+      case 'CreateBill':
+        bodyWidget = CreateBillPage(onBack: () => _navigateToPage('Home'));
+        break;
+      case 'History':
+        bodyWidget = HistoryPage(onBack: () => _navigateToPage('Home'), initialBills: initialBills);
+        break;
+      case 'Reports':
+        bodyWidget = ReportsPage(initialBills: initialBills, onBack: () => _navigateToPage('Home'));
+        break;
+      default:
+        bodyWidget = HomePage(onNavigate: _navigateToPage);
+    }
+
     return Scaffold(
-      appBar: (_isCreateBillPage || _isHistoryPage)
-          ? null
-          : AppBar(
+      appBar: (_currentPage == 'Home')
+          ? AppBar(
               title: const Text('Waghmare Stores'),
               centerTitle: true,
-            ),
-      body: _isCreateBillPage
-          ? CreateBillPage(onBack: _goBackToHome)
-          : _isHistoryPage
-              ? HistoryPage(onBack: _goBackToHome)
-              : _selectedIndex == 0
-                  ? HomePage(onCreateBill: _goToCreateBill, onHistory: _goToHistory)
-                  : const Center(child: Text("Other Pages Content")),
-      bottomNavigationBar: (_isCreateBillPage || _isHistoryPage)
-          ? null
-          : BottomNavigationBar(
+            )
+          : null,
+      body: bodyWidget,
+      bottomNavigationBar: (_currentPage == 'Home')
+          ? BottomNavigationBar(
               items: const [
                 BottomNavigationBarItem(
                   icon: Icon(Icons.home),
@@ -112,8 +106,13 @@ class _MainScreenState extends State<MainScreen> {
                 ),
               ],
               currentIndex: _selectedIndex,
-              onTap: _onItemTapped,
-            ),
+              onTap: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
+              },
+            )
+          : null,
     );
   }
 }
