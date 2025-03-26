@@ -14,7 +14,22 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Bill Generator',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        scaffoldBackgroundColor: Colors.white, // Whitish background for the whole app
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white, // Force white AppBar
+          surfaceTintColor: Colors.white, // Ensure no Material 3 overlay effect
+          elevation: 3, // Subtle elevation for depth
+          titleTextStyle: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold),
+          iconTheme: IconThemeData(color: Colors.black), // Black icons in AppBar
+        ),
+        bottomNavigationBarTheme: BottomNavigationBarThemeData(
+          backgroundColor: Colors.white, // White background for BottomNavigationBar
+          elevation: 5, // Soft shadow effect
+          selectedItemColor: Colors.black, // Black color for selected item
+          unselectedItemColor: Colors.grey, // Grey for unselected items
+          type: BottomNavigationBarType.fixed,
+        ),
+        useMaterial3: true, // Ensure Material 3 is properly handled
       ),
       home: const MainScreen(),
     );
@@ -58,6 +73,7 @@ class _MainScreenState extends State<MainScreen> {
           ? null
           : AppBar(
               title: const Text('Waghmare Stores'),
+              centerTitle: true,
             ),
       body: _isCreateBillPage
           ? CreateBillPage(onBack: _goBackToHome)
@@ -82,7 +98,6 @@ class _MainScreenState extends State<MainScreen> {
                 ),
               ],
               currentIndex: _selectedIndex,
-              selectedItemColor: Colors.blue,
               onTap: _onItemTapped,
             ),
     );

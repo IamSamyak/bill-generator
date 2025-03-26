@@ -12,19 +12,30 @@ class OrderList extends StatelessWidget {
       itemBuilder: (context, index) {
         var item = items[index];
         return Card(
-          elevation: 4,
-          margin: EdgeInsets.symmetric(vertical: 8),
+          color: Colors.white, // ✅ Consistent white card background
+          surfaceTintColor: Colors.white, // ✅ Prevent unwanted tint on some devices
+          elevation: 3, // ✅ Slight elevation for depth
+          margin: const EdgeInsets.symmetric(vertical: 8),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(12.0),
+            padding: const EdgeInsets.all(16.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("${index + 1}. ${item["type"]}", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                Text("Qty: ${item["quantity"]}", style: TextStyle(fontSize: 12)),
-                Text("Price: ₹${item["price"]}", style: TextStyle(fontSize: 12, color: Colors.green)),
+                Text(
+                  "${index + 1}. ${item["type"]}",
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black),
+                ),
+                Text(
+                  "Qty: ${item["quantity"]}",
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+                Text(
+                  "Price: ₹${item["price"]}",
+                  style: const TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.bold),
+                ),
               ],
             ),
           ),

@@ -15,42 +15,40 @@ class OrderSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 4,
-      margin: EdgeInsets.symmetric(vertical: 12),
+      color: Colors.white, // ✅ Consistent card background
+      surfaceTintColor: Colors.white, // ✅ Avoid tint issues
+      elevation: 3, // ✅ Subtle elevation for depth
+      margin: const EdgeInsets.symmetric(vertical: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Order Summary", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            Divider(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("Total Amount:", style: TextStyle(fontSize: 14)),
-                Text("₹${total.toStringAsFixed(2)}", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-              ],
+            const Text(
+              "Order Summary",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black),
             ),
-            SizedBox(height: 5),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("Discount (10%):", style: TextStyle(fontSize: 14, color: Colors.red)),
-                Text("- ₹${discount.toStringAsFixed(2)}", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.red)),
-              ],
-            ),
-            SizedBox(height: 5),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("Final Amount:", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green)),
-                Text("₹${finalAmount.toStringAsFixed(2)}", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green)),
-              ],
-            ),
+            const Divider(thickness: 1.2), // ✅ Slightly thicker divider for clarity
+            _buildSummaryRow("Total Amount:", "₹${total.toStringAsFixed(2)}", Colors.black, FontWeight.bold),
+            const SizedBox(height: 5),
+            _buildSummaryRow("Discount (10%):", "- ₹${discount.toStringAsFixed(2)}", Colors.red, FontWeight.bold),
+            const SizedBox(height: 5),
+            _buildSummaryRow("Final Amount:", "₹${finalAmount.toStringAsFixed(2)}", Colors.green, FontWeight.bold),
           ],
         ),
       ),
+    );
+  }
+
+  /// 🔹 Helper function to keep the code cleaner
+  Widget _buildSummaryRow(String label, String value, Color textColor, FontWeight fontWeight) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 14, color: Colors.black)),
+        Text(value, style: TextStyle(fontSize: 14, fontWeight: fontWeight, color: textColor)),
+      ],
     );
   }
 }
