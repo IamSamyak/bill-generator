@@ -19,9 +19,10 @@ class HomePage extends StatelessWidget {
         children: [
           _buildElevatedButton(Icons.receipt_long, 'Create Bill', () => onNavigate('CreateBill')),
           _buildElevatedButton(Icons.payment, "Today's Collections", () {}),
-          _buildElevatedButton(Icons.edit, 'Edit Details', () {}),
+          _buildElevatedButton(Icons.edit, 'Edit Details', () => onNavigate('EditDetails')),
           _buildElevatedButton(Icons.report, 'Reports', () => onNavigate('Reports')),
           _buildElevatedButton(Icons.history, 'History', () => onNavigate('History')),
+          _buildElevatedButton(Icons.print, 'Connect', () => onNavigate('Connect')),
         ],
       ),
     );

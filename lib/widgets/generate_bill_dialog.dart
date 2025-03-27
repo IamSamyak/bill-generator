@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:pdf/pdf.dart';
 import 'package:share_plus/share_plus.dart';
 
 class GenerateBillDialog extends StatefulWidget {
@@ -24,9 +25,9 @@ class _GenerateBillDialogState extends State<GenerateBillDialog> {
     final String billDate = "${now.year}-${now.month}-${now.day}";
     final String billTime = "${now.hour}:${now.minute}";
 
-    // 📌 Create PDF Content
     pdf.addPage(
       pw.Page(
+        pageFormat: PdfPageFormat(58 * PdfPageFormat.mm, double.infinity),
         build: (pw.Context context) {
           return pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -35,14 +36,12 @@ class _GenerateBillDialogState extends State<GenerateBillDialog> {
               pw.SizedBox(height: 5),
               pw.Text("Bill Date: $billDate | Time: $billTime", style: pw.TextStyle(fontSize: 12)),
               pw.SizedBox(height: 10),
-
               pw.Table.fromTextArray(
                 headers: ["Item", "Quantity", "Price"],
                 data: widget.items.map((item) {
                   return [item["name"], item["quantity"], "₹${item["price"]}"];
                 }).toList(),
               ),
-
               pw.SizedBox(height: 10),
               pw.Text("Thank You!", style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
             ],
@@ -51,12 +50,9 @@ class _GenerateBillDialogState extends State<GenerateBillDialog> {
       ),
     );
 
-    // 📌 Save PDF Temporarily
     final tempDir = await getTemporaryDirectory();
     final pdfFile = File("${tempDir.path}/bill.pdf");
     await pdfFile.writeAsBytes(await pdf.save());
-
-    // 📤 Share PDF via WhatsApp
     await Share.shareXFiles([XFile(pdfFile.path)], text: "Hello $name, here is your bill from Waghmare Stores.");
   }
 
@@ -79,24 +75,61 @@ class _GenerateBillDialogState extends State<GenerateBillDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text("Enter Customer Details", style: TextStyle(fontWeight: FontWeight.bold)),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(controller: nameController, decoration: const InputDecoration(labelText: "Customer Name")),
-          const SizedBox(height: 10),
-          TextField(controller: mobileController, decoration: const InputDecoration(labelText: "Mobile Number"), keyboardType: TextInputType.phone),
-        ],
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      title: const Text(
+        "Customer Details",
+        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: InputDecoration(
+                labelText: "Customer Name",
+                labelStyle: TextStyle(color: Colors.grey),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: mobileController,
+              keyboardType: TextInputType.phone,
+              decoration: InputDecoration(
+                labelText: "Mobile Number",
+                labelStyle: TextStyle(color: Colors.grey),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ],
+        ),
       ),
       actions: [
-        TextButton(
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.redAccent,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
           onPressed: () => Navigator.pop(context),
-          child: const Text("Cancel", style: TextStyle(color: Colors.red)),
+          child: const Text(
+            "Cancel",
+            style: TextStyle(color: Colors.black),
+          ),
         ),
         ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.teal,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
           onPressed: _handleConfirm,
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-          child: const Text("Confirm", style: TextStyle(color: Colors.white)),
+          child: const Text(
+            "Confirm",
+            style: TextStyle(color: Colors.black),
+          ),
         ),
       ],
     );

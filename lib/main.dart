@@ -1,3 +1,5 @@
+// import 'package:bill_generator/pages/connect_to_printer.dart';
+import 'package:bill_generator/pages/edit_details_page.dart';
 import 'package:bill_generator/pages/reports_page.dart';
 import 'package:flutter/material.dart';
 import 'package:bill_generator/pages/home_page.dart';
@@ -49,14 +51,14 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
   String _currentPage = 'Home';
 
-  final List<Map<String, dynamic>> initialBills = [
-    {'name': 'Ravi Kumar', 'date': '2024-07-25', 'amount': 1500, 'status': 'Paid'},
-    {'name': 'Sneha Verma', 'date': '2024-07-22', 'amount': 2300, 'status': 'Unpaid'},
-    {'name': 'Amit Sharma', 'date': '2024-06-15', 'amount': 1800, 'status': 'Paid'},
-    {'name': 'Neha Joshi', 'date': '2024-06-10', 'amount': 2700, 'status': 'Unpaid'},
-    {'name': 'Rajesh Kumar', 'date': '2024-05-20', 'amount': 3200, 'status': 'Paid'},
-    {'name': 'Priya Mehta', 'date': '2024-04-18', 'amount': 2900, 'status': 'Unpaid'},
-  ];
+final List<Map<String, dynamic>> initialBills = [
+  {'customer_name': 'Ravi Kumar', 'date': '2024-07-25', 'amount': 1500, 'status': 'Paid', 'contact_number': '9876543210'},
+  {'customer_name': 'Sneha Verma', 'date': '2024-07-22', 'amount': 2300, 'status': 'Unpaid', 'contact_number': '8765432109'},
+  {'customer_name': 'Amit Sharma', 'date': '2024-06-15', 'amount': 1800, 'status': 'Paid', 'contact_number': '7654321098'},
+  {'customer_name': 'Neha Joshi', 'date': '2024-06-10', 'amount': 2700, 'status': 'Unpaid', 'contact_number': '6543210987'},
+  {'customer_name': 'Rajesh Kumar', 'date': '2024-05-20', 'amount': 3200, 'status': 'Paid', 'contact_number': '5432109876'},
+  {'customer_name': 'Priya Mehta', 'date': '2024-04-18', 'amount': 2900, 'status': 'Unpaid', 'contact_number': '4321098765'},
+];
 
   void _navigateToPage(String page) {
     setState(() {
@@ -77,6 +79,12 @@ class _MainScreenState extends State<MainScreen> {
       case 'Reports':
         bodyWidget = ReportsPage(initialBills: initialBills, onBack: () => _navigateToPage('Home'));
         break;
+      case 'EditDetails':
+        bodyWidget = EditDetailsPage(onBack: () => _navigateToPage('Home'));
+        break;
+      // case 'EditDetails':
+      //   bodyWidget = ConnectToPrinterPage(onBack: () => _navigateToPage('Home'));
+      //   break;
       default:
         bodyWidget = HomePage(onNavigate: _navigateToPage);
     }

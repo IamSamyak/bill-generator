@@ -36,6 +36,8 @@
          https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
 
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
+
+         <uses-permission android:name="android.permission.CALL_PHONE" />
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
@@ -48,6 +50,10 @@
     <intent>
         <action android:name="android.intent.action.VIEW" />
         <data android:scheme="whatsapp" />
+    </intent>
+    <intent>
+        <action android:name="android.intent.action.DIAL" />
+        <data android:scheme="tel" />
     </intent>
     </queries>
 </manifest>
