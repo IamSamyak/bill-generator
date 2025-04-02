@@ -56,6 +56,8 @@ class _MainScreenState extends State<MainScreen> {
     {'customer_name': 'Neha Joshi', 'date': '2024-06-10', 'amount': 2700, 'status': 'Unpaid', 'contact_number': '6543210987'},
     {'customer_name': 'Rajesh Kumar', 'date': '2024-05-20', 'amount': 3200, 'status': 'Paid', 'contact_number': '5432109876'},
     {'customer_name': 'Priya Mehta', 'date': '2024-04-18', 'amount': 2900, 'status': 'Unpaid', 'contact_number': '4321098765'},
+    {'customer_name': 'Riya Mehta', 'date': '2024-03-18', 'amount': 2900, 'status': 'Unpaid', 'contact_number': '4321098765'},
+    {'customer_name': 'Giya Mehta', 'date': '2024-02-18', 'amount': 2900, 'status': 'Unpaid', 'contact_number': '4321098765'},
   ];
 
   void _navigateToPage(String page) {
@@ -96,10 +98,10 @@ class _MainScreenState extends State<MainScreen> {
           ? Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  height: 1, // Border above the bottom navigation
-                  color: Colors.grey.shade300,
-                ),
+                // Container(
+                //   height: 1, // Border above the bottom navigation
+                //   color: Colors.grey.shade300,
+                // ),
                 BottomNavigationBar(
                   items: [
                     BottomNavigationBarItem(
