@@ -1,4 +1,3 @@
-// import 'package:bill_generator/pages/connect_to_printer.dart';
 import 'package:bill_generator/pages/edit_details_page.dart';
 import 'package:bill_generator/pages/reports_page.dart';
 import 'package:flutter/material.dart';
@@ -23,14 +22,13 @@ class MyApp extends StatelessWidget {
           backgroundColor: Colors.white,
           surfaceTintColor: Colors.white,
           elevation: 3,
-          titleTextStyle: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold),
+          titleTextStyle: TextStyle(
+            color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold),
           iconTheme: IconThemeData(color: Colors.black),
         ),
-        bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
           backgroundColor: Colors.white,
           elevation: 5,
-          selectedItemColor: Colors.black,
-          unselectedItemColor: Colors.grey,
           type: BottomNavigationBarType.fixed,
         ),
         useMaterial3: true,
@@ -51,14 +49,14 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
   String _currentPage = 'Home';
 
-final List<Map<String, dynamic>> initialBills = [
-  {'customer_name': 'Ravi Kumar', 'date': '2024-07-25', 'amount': 1500, 'status': 'Paid', 'contact_number': '9876543210'},
-  {'customer_name': 'Sneha Verma', 'date': '2024-07-22', 'amount': 2300, 'status': 'Unpaid', 'contact_number': '8765432109'},
-  {'customer_name': 'Amit Sharma', 'date': '2024-06-15', 'amount': 1800, 'status': 'Paid', 'contact_number': '7654321098'},
-  {'customer_name': 'Neha Joshi', 'date': '2024-06-10', 'amount': 2700, 'status': 'Unpaid', 'contact_number': '6543210987'},
-  {'customer_name': 'Rajesh Kumar', 'date': '2024-05-20', 'amount': 3200, 'status': 'Paid', 'contact_number': '5432109876'},
-  {'customer_name': 'Priya Mehta', 'date': '2024-04-18', 'amount': 2900, 'status': 'Unpaid', 'contact_number': '4321098765'},
-];
+  final List<Map<String, dynamic>> initialBills = [
+    {'customer_name': 'Ravi Kumar', 'date': '2024-07-25', 'amount': 1500, 'status': 'Paid', 'contact_number': '9876543210'},
+    {'customer_name': 'Sneha Verma', 'date': '2024-07-22', 'amount': 2300, 'status': 'Unpaid', 'contact_number': '8765432109'},
+    {'customer_name': 'Amit Sharma', 'date': '2024-06-15', 'amount': 1800, 'status': 'Paid', 'contact_number': '7654321098'},
+    {'customer_name': 'Neha Joshi', 'date': '2024-06-10', 'amount': 2700, 'status': 'Unpaid', 'contact_number': '6543210987'},
+    {'customer_name': 'Rajesh Kumar', 'date': '2024-05-20', 'amount': 3200, 'status': 'Paid', 'contact_number': '5432109876'},
+    {'customer_name': 'Priya Mehta', 'date': '2024-04-18', 'amount': 2900, 'status': 'Unpaid', 'contact_number': '4321098765'},
+  ];
 
   void _navigateToPage(String page) {
     setState(() {
@@ -74,51 +72,79 @@ final List<Map<String, dynamic>> initialBills = [
         bodyWidget = CreateBillPage(onBack: () => _navigateToPage('Home'));
         break;
       case 'History':
-        bodyWidget = HistoryPage(onBack: () => _navigateToPage('Home'), initialBills: initialBills);
+        bodyWidget = HistoryPage(initialBills: initialBills);
         break;
       case 'Reports':
-        bodyWidget = ReportsPage(initialBills: initialBills, onBack: () => _navigateToPage('Home'));
+        bodyWidget = ReportsPage(initialBills: initialBills);
         break;
       case 'EditDetails':
         bodyWidget = EditDetailsPage(onBack: () => _navigateToPage('Home'));
         break;
-      // case 'EditDetails':
-      //   bodyWidget = ConnectToPrinterPage(onBack: () => _navigateToPage('Home'));
-      //   break;
       default:
         bodyWidget = HomePage(onNavigate: _navigateToPage);
     }
 
     return Scaffold(
-      appBar: (_currentPage == 'Home')
+      appBar: (_currentPage != 'CreateBill')
           ? AppBar(
               title: const Text('Waghmare Stores'),
               centerTitle: true,
             )
           : null,
       body: bodyWidget,
-      bottomNavigationBar: (_currentPage == 'Home')
-          ? BottomNavigationBar(
-              items: const [
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.home),
-                  label: 'Home',
+      bottomNavigationBar: (_currentPage != 'CreateBill')
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  height: 1, // Border above the bottom navigation
+                  color: Colors.grey.shade300,
                 ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.payment),
-                  label: "Today's Collection",
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(Icons.edit),
-                  label: 'Edit Details',
+                BottomNavigationBar(
+                  items: [
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.home_rounded, size: _selectedIndex == 0 ? 30 : 24),
+                      label: 'Home',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.history, size: _selectedIndex == 1 ? 30 : 24),
+                      label: 'History',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.bar_chart_rounded, size: _selectedIndex == 2 ? 30 : 24),
+                      label: 'Dashboard',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.menu, size: _selectedIndex == 3 ? 30 : 24),
+                      label: 'Menu',
+                    ),
+                  ],
+                  currentIndex: _selectedIndex,
+                  selectedItemColor: Colors.yellow.shade700,
+                  unselectedItemColor: Colors.grey,
+                  selectedLabelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  unselectedLabelStyle: const TextStyle(fontSize: 12),
+                  onTap: (index) {
+                    setState(() {
+                      _selectedIndex = index;
+                      switch (index) {
+                        case 0:
+                          _navigateToPage('Home');
+                          break;
+                        case 1:
+                          _navigateToPage('History');
+                          break;
+                        case 2:
+                          _navigateToPage('Reports'); // Assuming Dashboard shows Reports
+                          break;
+                        case 3:
+                          _navigateToPage('EditDetails'); // Assuming Menu navigates to EditDetails
+                          break;
+                      }
+                    });
+                  },
                 ),
               ],
-              currentIndex: _selectedIndex,
-              onTap: (index) {
-                setState(() {
-                  _selectedIndex = index;
-                });
-              },
             )
           : null,
     );

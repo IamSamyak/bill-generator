@@ -32,15 +32,32 @@ class BillItemWidget extends StatelessWidget {
     }
   }
 
-  // Function to generate a random color
-  Color _generateRandomColor() {
+  Color _generateRandomLightColor() {
     final Random random = Random();
-    return Color.fromRGBO(
-      random.nextInt(256), // Red value
-      random.nextInt(256), // Green value
-      random.nextInt(256), // Blue value
-      1.0, // Full opacity
-    );
+
+    int red = random.nextInt(156) + 100; // Ensures red is between 100-255
+    int green = random.nextInt(156) + 100; // Ensures green is between 100-255
+    int blue = random.nextInt(156) + 100; // Ensures blue is between 100-255
+
+    return Color.fromRGBO(red, green, blue, 1.0);
+  }
+
+  // Method to format the date as "MMM dd, yyyy"
+  String _formatDate(String dateString) {
+    List<String> months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+
+    List<String> dateParts = dateString.split('-');
+    if (dateParts.length == 3) {
+      String year = dateParts[0];
+      int monthIndex = int.tryParse(dateParts[1]) ?? 1;
+      String day = dateParts[2];
+
+      return '${months[monthIndex - 1]} $day, $year'; // Format: "MMM dd, yyyy"
+    }
+    return dateString; // Return original string if parsing fails
   }
 
   @override
@@ -52,7 +69,7 @@ class BillItemWidget extends StatelessWidget {
             GestureDetector(
               onTap: () => _dialNumber(bill['contact_number']), // Trigger phone dialing on tap
               child: CircleAvatar(
-                backgroundColor: _generateRandomColor(), // Assign random color to background
+                backgroundColor: _generateRandomLightColor(), // Assign random color to background
                 child: Text(
                   bill['customer_name'][0],
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -66,9 +83,12 @@ class BillItemWidget extends StatelessWidget {
                 children: [
                   Text(
                     bill['customer_name'],
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
                   ),
-                  Text('Bill Date: ${bill['date']}'),
+                  Text(
+                    'Bill Date: ${_formatDate(bill['date'])}',
+                    style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                  ),
                 ],
               ),
             ),

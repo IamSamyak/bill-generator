@@ -19,7 +19,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
       ),
       title: const Text(
         "Add Clothing Item",
-        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
       ),
       content: SingleChildScrollView(
         child: Column(
@@ -28,13 +28,13 @@ class _AddItemDialogState extends State<AddItemDialog> {
             DropdownButtonFormField<String>(
               decoration: InputDecoration(
                 labelText: "Item Type",
-                labelStyle: TextStyle(color: Colors.grey),
+                labelStyle: TextStyle(color: Colors.black54),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
               items: ["Shirt", "Pant", "T-shirt"].map((String value) {
                 return DropdownMenuItem<String>(
                   value: value,
-                  child: Text(value),
+                  child: Text(value, style: TextStyle(color: Colors.black87)),
                 );
               }).toList(),
               onChanged: (value) => setState(() => selectedItem = value),
@@ -44,11 +44,11 @@ class _AddItemDialogState extends State<AddItemDialog> {
               children: [
                 Expanded(
                   child: TextField(
-                    controller: quantityController,
+                    controller: priceController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      labelText: "Quantity",
-                      labelStyle: TextStyle(color: Colors.grey),
+                      labelText: "Price",
+                      labelStyle: TextStyle(color: Colors.black54),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
@@ -56,11 +56,11 @@ class _AddItemDialogState extends State<AddItemDialog> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: TextField(
-                    controller: priceController,
+                    controller: quantityController,
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
-                      labelText: "Price",
-                      labelStyle: TextStyle(color: Colors.grey),
+                      labelText: "Quantity",
+                      labelStyle: TextStyle(color: Colors.black54),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                     ),
                   ),
@@ -79,12 +79,12 @@ class _AddItemDialogState extends State<AddItemDialog> {
           onPressed: () => Navigator.pop(context),
           child: const Text(
             "Cancel",
-            style: TextStyle(color: Colors.black), // Changed to black
+            style: TextStyle(color: Colors.white),
           ),
         ),
         ElevatedButton(
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.teal,
+            backgroundColor: Color(0xFF007BFF), // Same blue from previous components
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
           onPressed: () {
@@ -98,7 +98,7 @@ class _AddItemDialogState extends State<AddItemDialog> {
           },
           child: const Text(
             "Add",
-            style: TextStyle(color: Colors.black), // Changed to black
+            style: TextStyle(color: Colors.white),
           ),
         ),
       ],

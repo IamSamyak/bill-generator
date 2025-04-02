@@ -7,40 +7,65 @@ class OrderList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        var item = items[index];
-        return Card(
-          color: Colors.white, // ✅ Consistent white card background
-          surfaceTintColor: Colors.white, // ✅ Prevent unwanted tint on some devices
-          elevation: 3, // ✅ Slight elevation for depth
-          margin: const EdgeInsets.symmetric(vertical: 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "${index + 1}. ${item["type"]}",
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black),
-                ),
-                Text(
-                  "Qty: ${item["quantity"]}",
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-                Text(
-                  "Price: ₹${item["price"]}",
-                  style: const TextStyle(fontSize: 12, color: Colors.green, fontWeight: FontWeight.bold),
-                ),
-              ],
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal, // Enable horizontal scrolling
+      child: DataTable(
+        columnSpacing: 20, // Adjust spacing between columns
+        headingRowColor: WidgetStateColor.resolveWith(
+            (states) => Colors.grey.shade800), // Dark gray header
+        border: TableBorder.all(color: Colors.grey.shade500), // Soft gray border
+        columns: const [
+          DataColumn(
+            label: Text(
+              "S.No",
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
             ),
           ),
-        );
-      },
+          DataColumn(
+            label: Text(
+              "Item Type",
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+          ),
+          DataColumn(
+            label: Text(
+              "Quantity",
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+          ),
+          DataColumn(
+            label: Text(
+              "Price (₹)",
+              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+            ),
+          ),
+        ],
+        rows: items
+            .asMap()
+            .entries
+            .map(
+              (entry) => DataRow(
+                color: WidgetStateColor.resolveWith(
+                  (states) => entry.key.isEven
+                      ? Colors.grey.shade100 // Light gray for even rows
+                      : Colors.white, // White for odd rows
+                ),
+                cells: [
+                  DataCell(Text("${entry.key + 1}")),
+                  DataCell(Text(entry.value["type"])),
+                  DataCell(Text(entry.value["quantity"].toString())),
+                  DataCell(
+                    Text(
+                      "₹${entry.value["price"]}",
+                      style: const TextStyle(
+                          color: Colors.black87, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            )
+            .toList(),
+      ),
     );
   }
 }
