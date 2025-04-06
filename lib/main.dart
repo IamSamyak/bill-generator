@@ -4,9 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:bill_generator/pages/home_page.dart';
 import 'package:bill_generator/pages/create_bill_page.dart';
 import 'package:bill_generator/pages/history_page.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-void main() {
-  runApp(const MyApp());
+// Define the main color as a constant
+const Color kMainColor = Color(0xFF3498DB);
+
+void main() async {
+  await dotenv.load(fileName: ".env");
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -23,7 +28,7 @@ class MyApp extends StatelessWidget {
           surfaceTintColor: Colors.white,
           elevation: 3,
           titleTextStyle: TextStyle(
-            color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold),
+              color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold),
           iconTheme: IconThemeData(color: Colors.black),
         ),
         bottomNavigationBarTheme: const BottomNavigationBarThemeData(
@@ -32,6 +37,7 @@ class MyApp extends StatelessWidget {
           type: BottomNavigationBarType.fixed,
         ),
         useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(seedColor: kMainColor),
       ),
       home: const MainScreen(),
     );
@@ -98,10 +104,6 @@ class _MainScreenState extends State<MainScreen> {
           ? Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Container(
-                //   height: 1, // Border above the bottom navigation
-                //   color: Colors.grey.shade300,
-                // ),
                 BottomNavigationBar(
                   items: [
                     BottomNavigationBarItem(
@@ -122,7 +124,7 @@ class _MainScreenState extends State<MainScreen> {
                     ),
                   ],
                   currentIndex: _selectedIndex,
-                  selectedItemColor: Colors.yellow.shade700,
+                  selectedItemColor: kMainColor,
                   unselectedItemColor: Colors.grey,
                   selectedLabelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                   unselectedLabelStyle: const TextStyle(fontSize: 12),
@@ -137,10 +139,10 @@ class _MainScreenState extends State<MainScreen> {
                           _navigateToPage('History');
                           break;
                         case 2:
-                          _navigateToPage('Reports'); // Assuming Dashboard shows Reports
+                          _navigateToPage('Reports');
                           break;
                         case 3:
-                          _navigateToPage('EditDetails'); // Assuming Menu navigates to EditDetails
+                          _navigateToPage('EditDetails');
                           break;
                       }
                     });
@@ -151,4 +153,4 @@ class _MainScreenState extends State<MainScreen> {
           : null,
     );
   }
-}
+}  

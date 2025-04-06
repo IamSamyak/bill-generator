@@ -49,8 +49,12 @@ class HomePage extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 25,
-              backgroundColor: Colors.yellow.shade700,
-              child: Icon(icon, size: 24, color: Colors.white),
+              backgroundColor: Color(0xFFc1dff6), // Light blue background
+              child: Icon(
+                icon,
+                size: 24,
+                color: Color(0xFF4ca7e4), // Blue icon color
+              ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -73,4 +77,5 @@ class HomePage extends StatelessWidget {
 final _menuItems = [
   {'icon': Icons.receipt_long, 'title': 'Create Bill', 'route': 'CreateBill'},
   {'icon': Icons.print, 'title': 'Connect', 'route': 'Connect'},
+  {'icon': Icons.category, 'title': 'Add Categories', 'route': 'Categories'},
 ];
