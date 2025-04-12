@@ -80,7 +80,7 @@ class _MainScreenState extends State<MainScreen> {
         bodyWidget = CreateBillPage(onBack: () => _navigateToPage('Home'));
         break;
       case 'History':
-        bodyWidget = HistoryPage(initialBills: initialBills);
+        bodyWidget = HistoryPage();
         break;
       case 'Reports':
         bodyWidget = ReportsPage(initialBills: initialBills);

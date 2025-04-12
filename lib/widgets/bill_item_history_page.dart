@@ -62,16 +62,17 @@ class BillItemWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+                print('Bills: $bill');
     return Column(
       children: [
         Row(
           children: [
             GestureDetector(
-              onTap: () => _dialNumber(bill['contact_number']), // Trigger phone dialing on tap
+              onTap: () => _dialNumber(bill['mobileNumber']), // Trigger phone dialing on tap
               child: CircleAvatar(
                 backgroundColor: _generateRandomLightColor(), // Assign random color to background
                 child: Text(
-                  bill['customer_name'][0],
+                  bill['customerName'][0],
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                 ),
               ),
@@ -82,7 +83,7 @@ class BillItemWidget extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    bill['customer_name'],
+                    bill['customerName'],
                     style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
                   ),
                   Text(
@@ -96,20 +97,20 @@ class BillItemWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '₹${bill['amount']}',
+                  '₹${bill['netAmount']}',
                   style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
                 ),
                 const SizedBox(height: 4),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: bill['status'] == 'Paid' ? Colors.green.shade100 : Colors.red.shade100,
+                    color: bill['payStatus'] == 'Paid' ? Colors.green.shade100 : Colors.red.shade100,
                     borderRadius: BorderRadius.circular(5),
                   ),
                   child: Text(
-                    bill['status'],
+                    bill['payStatus'],
                     style: TextStyle(
-                      color: bill['status'] == 'Paid' ? Colors.green[800] : Colors.red[800],
+                      color: bill['payStatus'] == 'Paid' ? Colors.green[800] : Colors.red[800],
                       fontWeight: FontWeight.bold,
                       fontSize: 11,
                     ),
