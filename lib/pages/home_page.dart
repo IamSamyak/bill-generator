@@ -78,4 +78,5 @@ final _menuItems = [
   {'icon': Icons.receipt_long, 'title': 'Create Bill', 'route': 'CreateBill'},
   {'icon': Icons.print, 'title': 'Connect', 'route': 'Connect'},
   {'icon': Icons.category, 'title': 'Add Categories', 'route': 'Categories'},
+  {'icon': Icons.share, 'title': 'Share Products', 'route': 'Share-Media'},
 ];

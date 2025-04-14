@@ -1,5 +1,6 @@
 import 'package:bill_generator/pages/edit_details_page.dart';
 import 'package:bill_generator/pages/reports_page.dart';
+import 'package:bill_generator/pages/share_images_page.dart';
 import 'package:flutter/material.dart';
 import 'package:bill_generator/pages/home_page.dart';
 import 'package:bill_generator/pages/create_bill_page.dart';
@@ -87,6 +88,9 @@ class _MainScreenState extends State<MainScreen> {
         break;
       case 'EditDetails':
         bodyWidget = EditDetailsPage(onBack: () => _navigateToPage('Home'));
+        break;
+      case 'Share-Media':
+        bodyWidget = ShareImagesPage();
         break;
       default:
         bodyWidget = HomePage(onNavigate: _navigateToPage);
