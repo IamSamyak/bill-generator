@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+// Define the main color as a constant
+const Color kMainColor = Color(0xFF1864BF);
+
 class HomePage extends StatelessWidget {
   final Function(String) onNavigate;
 
@@ -8,63 +11,58 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: GridView.builder(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 3,
-          crossAxisSpacing: 12,
-          mainAxisSpacing: 12,
-          childAspectRatio: 0.8,
-        ),
-        itemCount: _menuItems.length,
-        itemBuilder: (context, index) {
-          final item = _menuItems[index];
-          return _buildCompactCard(
-            item['icon'] as IconData,
-            item['title'] as String,
-            item['route'] as String,
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildCompactCard(IconData icon, String title, String route) {
-    return GestureDetector(
-      onTap: () => onNavigate(route),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.3),
-              blurRadius: 6,
-              offset: const Offset(2, 2),
-            ),
-          ],
-        ),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0,vertical: 24), // Removed vertical padding
+      child: Align(
+        alignment: Alignment.topCenter, // Align horizontally centered at top
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center, // Horizontal centering
           children: [
-            CircleAvatar(
-              radius: 25,
-              backgroundColor: Color(0xFFc1dff6), // Light blue background
-              child: Icon(
-                icon,
-                size: 24,
-                color: Color(0xFF4ca7e4), // Blue icon color
+            Padding(
+              padding: const EdgeInsets.only(left: 10.0),
+              child: Transform.scale(
+                scale: 0.8,
+                child: Image.asset(
+                  'assets/temp.png',
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: const TextStyle(
-                color: Colors.black,
-                fontSize: 12,
+            const Text(
+              "Akash Men's Wear",
+              style: TextStyle(
+                fontSize: 26,
                 fontWeight: FontWeight.bold,
+                color: Color(0xFF184373),
+              ),
+            ),
+            const SizedBox(height: 5),
+            const Text(
+              "Generate bill for your customer",
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.black54,
               ),
               textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 28),
+            ElevatedButton(
+              onPressed: () => onNavigate('CreateBill'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kMainColor,
+                padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 18),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: const Text(
+                "Generate Bill",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ],
         ),
@@ -72,11 +70,3 @@ class HomePage extends StatelessWidget {
     );
   }
 }
-
-// Menu items data
-final _menuItems = [
-  {'icon': Icons.receipt_long, 'title': 'Create Bill', 'route': 'CreateBill'},
-  {'icon': Icons.print, 'title': 'Connect', 'route': 'Connect'},
-  {'icon': Icons.category, 'title': 'Add Categories', 'route': 'Categories'},
-  {'icon': Icons.share, 'title': 'Share Products', 'route': 'Share-Media'},
-];

@@ -8,7 +8,7 @@ import 'package:bill_generator/pages/history_page.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // Define the main color as a constant
-const Color kMainColor = Color(0xFF3498DB);
+const Color kMainColor = Color(0xFF1A66BE);
 
 void main() async {
   await dotenv.load(fileName: ".env");
@@ -25,12 +25,15 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         scaffoldBackgroundColor: Colors.white,
         appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.white,
-          surfaceTintColor: Colors.white,
+          backgroundColor: kMainColor,
+          surfaceTintColor: kMainColor,
           elevation: 3,
           titleTextStyle: TextStyle(
-              color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold),
-          iconTheme: IconThemeData(color: Colors.black),
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+          iconTheme: IconThemeData(color: Colors.white),
         ),
         bottomNavigationBarTheme: const BottomNavigationBarThemeData(
           backgroundColor: Colors.white,
@@ -57,14 +60,62 @@ class _MainScreenState extends State<MainScreen> {
   String _currentPage = 'Home';
 
   final List<Map<String, dynamic>> initialBills = [
-    {'customer_name': 'Ravi Kumar', 'date': '2024-07-25', 'amount': 1500, 'status': 'Paid', 'contact_number': '9876543210'},
-    {'customer_name': 'Sneha Verma', 'date': '2024-07-22', 'amount': 2300, 'status': 'Unpaid', 'contact_number': '8765432109'},
-    {'customer_name': 'Amit Sharma', 'date': '2024-06-15', 'amount': 1800, 'status': 'Paid', 'contact_number': '7654321098'},
-    {'customer_name': 'Neha Joshi', 'date': '2024-06-10', 'amount': 2700, 'status': 'Unpaid', 'contact_number': '6543210987'},
-    {'customer_name': 'Rajesh Kumar', 'date': '2024-05-20', 'amount': 3200, 'status': 'Paid', 'contact_number': '5432109876'},
-    {'customer_name': 'Priya Mehta', 'date': '2024-04-18', 'amount': 2900, 'status': 'Unpaid', 'contact_number': '4321098765'},
-    {'customer_name': 'Riya Mehta', 'date': '2024-03-18', 'amount': 2900, 'status': 'Unpaid', 'contact_number': '4321098765'},
-    {'customer_name': 'Giya Mehta', 'date': '2024-02-18', 'amount': 2900, 'status': 'Unpaid', 'contact_number': '4321098765'},
+    {
+      'customer_name': 'Ravi Kumar',
+      'date': '2024-07-25',
+      'amount': 1500,
+      'status': 'Paid',
+      'contact_number': '9876543210',
+    },
+    {
+      'customer_name': 'Sneha Verma',
+      'date': '2024-07-22',
+      'amount': 2300,
+      'status': 'Unpaid',
+      'contact_number': '8765432109',
+    },
+    {
+      'customer_name': 'Amit Sharma',
+      'date': '2024-06-15',
+      'amount': 1800,
+      'status': 'Paid',
+      'contact_number': '7654321098',
+    },
+    {
+      'customer_name': 'Neha Joshi',
+      'date': '2024-06-10',
+      'amount': 2700,
+      'status': 'Unpaid',
+      'contact_number': '6543210987',
+    },
+    {
+      'customer_name': 'Rajesh Kumar',
+      'date': '2024-05-20',
+      'amount': 3200,
+      'status': 'Paid',
+      'contact_number': '5432109876',
+    },
+    {
+      'customer_name': 'Priya Mehta',
+      'date': '2024-04-18',
+      'amount': 2900,
+      'status': 'Unpaid',
+      'contact_number': '4321098765',
+    },
+    {
+      'customer_name': 'Riya Mehta',
+      'date': '2024-03-18',
+      'amount': 2900,
+      'status': 'Unpaid',
+      'contact_number': '4321098765',
+    },
+    {
+      'customer_name': 'Giya Mehta',
+      'date': '2024-02-18',
+      'amount': 2900,
+      'status': 'Unpaid',
+      'contact_number': '4321098765',
+    },
   ];
 
   void _navigateToPage(String page) {
@@ -97,64 +148,94 @@ class _MainScreenState extends State<MainScreen> {
     }
 
     return Scaffold(
-      appBar: (_currentPage != 'CreateBill')
-          ? AppBar(
-              title: const Text('Waghmare Stores'),
-              centerTitle: true,
-            )
-          : null,
-      body: bodyWidget,
-      bottomNavigationBar: (_currentPage != 'CreateBill')
-          ? Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                BottomNavigationBar(
-                  items: [
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.home_rounded, size: _selectedIndex == 0 ? 30 : 24),
-                      label: 'Home',
-                    ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.history, size: _selectedIndex == 1 ? 30 : 24),
-                      label: 'History',
-                    ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.bar_chart_rounded, size: _selectedIndex == 2 ? 30 : 24),
-                      label: 'Dashboard',
-                    ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.menu, size: _selectedIndex == 3 ? 30 : 24),
-                      label: 'Menu',
-                    ),
-                  ],
-                  currentIndex: _selectedIndex,
-                  selectedItemColor: kMainColor,
-                  unselectedItemColor: Colors.grey,
-                  selectedLabelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                  unselectedLabelStyle: const TextStyle(fontSize: 12),
-                  onTap: (index) {
-                    setState(() {
-                      _selectedIndex = index;
-                      switch (index) {
-                        case 0:
-                          _navigateToPage('Home');
-                          break;
-                        case 1:
-                          _navigateToPage('History');
-                          break;
-                        case 2:
-                          _navigateToPage('Reports');
-                          break;
-                        case 3:
-                          _navigateToPage('EditDetails');
-                          break;
-                      }
-                    });
+      appBar: AppBar(
+        leading:
+            _currentPage == 'CreateBill'
+                ? IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () {
+                    _navigateToPage('Home');
                   },
-                ),
-              ],
-            )
-          : null,
+                )
+                : null,
+        title: const Text('Bill Generator'),
+        centerTitle: true,
+        backgroundColor: kMainColor,
+        iconTheme: const IconThemeData(color: Colors.white),
+        titleTextStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      body: bodyWidget,
+      bottomNavigationBar:
+          (_currentPage != 'CreateBill')
+              ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  BottomNavigationBar(
+                    items: [
+                      BottomNavigationBarItem(
+                        icon: Icon(
+                          Icons.home_rounded,
+                          size: _selectedIndex == 0 ? 30 : 24,
+                        ),
+                        label: 'Home',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: Icon(
+                          Icons.history,
+                          size: _selectedIndex == 1 ? 30 : 24,
+                        ),
+                        label: 'History',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: Icon(
+                          Icons.bar_chart_rounded,
+                          size: _selectedIndex == 2 ? 30 : 24,
+                        ),
+                        label: 'Dashboard',
+                      ),
+                      BottomNavigationBarItem(
+                        icon: Icon(
+                          Icons.menu,
+                          size: _selectedIndex == 3 ? 30 : 24,
+                        ),
+                        label: 'Menu',
+                      ),
+                    ],
+                    currentIndex: _selectedIndex,
+                    selectedItemColor: kMainColor,
+                    unselectedItemColor: Colors.grey,
+                    selectedLabelStyle: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    unselectedLabelStyle: const TextStyle(fontSize: 12),
+                    onTap: (index) {
+                      setState(() {
+                        _selectedIndex = index;
+                        switch (index) {
+                          case 0:
+                            _navigateToPage('Home');
+                            break;
+                          case 1:
+                            _navigateToPage('History');
+                            break;
+                          case 2:
+                            _navigateToPage('Reports');
+                            break;
+                          case 3:
+                            _navigateToPage('EditDetails');
+                            break;
+                        }
+                      });
+                    },
+                  ),
+                ],
+              )
+              : null,
     );
   }
-}  
+}

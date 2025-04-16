@@ -13,8 +13,8 @@ class FilterButton extends StatelessWidget {
       padding: const EdgeInsets.only(right: 10.0),
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: isSelected ? Color(0xFF8ac5ef) : Colors.white,
-          foregroundColor: isSelected ? Colors.black87 : Colors.black87,
+          backgroundColor: isSelected ? Color(0xFF1864c3) : Colors.white,
+          foregroundColor: isSelected ? Colors.white : Colors.black87,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
