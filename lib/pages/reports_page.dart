@@ -1,23 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:bill_generator/services/bill_service.dart'; // Import the BillService
 import 'package:bill_generator/widgets/line_chart.dart';
 import 'package:bill_generator/widgets/bar_chart.dart';
 import 'package:bill_generator/widgets/graph_description.dart';
 
 class ReportsPage extends StatefulWidget {
-  final List<Map<String, dynamic>> initialBills;
-
-  const ReportsPage({super.key, required this.initialBills});
+  const ReportsPage({super.key});
 
   @override
   _ReportsPageState createState() => _ReportsPageState();
 }
 
 class _ReportsPageState extends State<ReportsPage> {
+  final BillService billService = BillService(); // Create an instance of BillService
+  bool _isLoading = true;
+  String? _error;
+  List<Map<String, dynamic>> _bills = [];
   String selectedChartType = "Bar Chart";
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchBills();
+  }
+
+  Future<void> _fetchBills() async {
+    try {
+      final bills = await billService.fetchBills(); // Use BillService to fetch bills
+      setState(() {
+        _bills = bills;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
 
   Map<String, double> calculateMonthlyRevenue() {
     Map<String, double> revenue = {};
-    for (var bill in widget.initialBills) {
+    for (var bill in _bills) {
       DateTime date = DateTime.parse(bill['date']);
       String month = "${date.year}-${date.month.toString().padLeft(2, '0')}";
       revenue[month] = (revenue[month] ?? 0) + bill['amount'];
@@ -27,45 +51,21 @@ class _ReportsPageState extends State<ReportsPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_error != null) {
+      return Center(child: Text('Error: $_error'));
+    }
+
     Map<String, double> monthlyRevenue = calculateMonthlyRevenue();
     double totalRevenue = monthlyRevenue.values.fold(
       0,
       (sum, amount) => sum + amount,
     );
-    double averageRevenue =
-        monthlyRevenue.isNotEmpty ? totalRevenue / monthlyRevenue.length : 0;
 
-    String maxRevenueMonth =
-        monthlyRevenue.isNotEmpty
-            ? monthlyRevenue.entries
-                .reduce((a, b) => a.value > b.value ? a : b)
-                .key
-            : "N/A";
-    String minRevenueMonth =
-        monthlyRevenue.isNotEmpty
-            ? monthlyRevenue.entries
-                .reduce((a, b) => a.value < b.value ? a : b)
-                .key
-            : "N/A";
-
-    // Calculate current month key and revenue
-    DateTime now = DateTime.now();
-    String currentMonthKey =
-        "${now.year}-${now.month.toString().padLeft(2, '0')}";
-    double currentMonthRevenue = monthlyRevenue[currentMonthKey] ?? 0;
-
-    // Average of previous months (excluding current)
-    List<String> previousMonths =
-        monthlyRevenue.keys.where((k) => k != currentMonthKey).toList();
-    double avgPreviousRevenue =
-        previousMonths.isNotEmpty
-            ? previousMonths
-                    .map((k) => monthlyRevenue[k]!)
-                    .reduce((a, b) => a + b) /
-                previousMonths.length
-            : 0;
-
-    return SingleChildScrollView( // Wrap the entire page in a scrollable view
+    return SingleChildScrollView(
       child: Column(
         children: [
           Padding(
@@ -74,7 +74,7 @@ class _ReportsPageState extends State<ReportsPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  "Reports",
+                  "Revenue",
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 DropdownButton<String>(
@@ -103,11 +103,7 @@ class _ReportsPageState extends State<ReportsPage> {
               : LineChartWidget(monthlyRevenue: monthlyRevenue),
           GraphDescription(
             totalRevenue: totalRevenue,
-            maxRevenueMonth: maxRevenueMonth,
-            minRevenueMonth: minRevenueMonth,
-            averageRevenue: averageRevenue,
-            currentMonthRevenue: currentMonthRevenue,
-            avgPreviousRevenue: avgPreviousRevenue,
+            // Add other variables here as needed
           ),
         ],
       ),

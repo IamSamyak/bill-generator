@@ -49,7 +49,7 @@ class BarChartWidget extends StatelessWidget {
 
     // Adjust to nearest 1000 for cleaner axis
     double interval = 1000;
-    minY = (minY ~/ interval) * interval;
+    minY = minY > 0 ? 0 : (minY ~/ interval) * interval;
     maxY = ((maxY / interval).ceil()) * interval;
 
     List<BarChartGroupData> barGroups = reversedMonths.asMap().entries.map(
@@ -59,9 +59,12 @@ class BarChartWidget extends StatelessWidget {
           barRods: [
             BarChartRodData(
               toY: monthlyRevenue[entry.value]!,
-              color: Colors.blue,
-              borderRadius: BorderRadius.circular(6),
-              width: 16,
+              color: Color(0xFF1A66BE), // Custom color
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(6), // Curvy top left
+                topRight: Radius.circular(6), // Curvy top right
+              ),
+              width: 24, // Increased bar width
             ),
           ],
         );
@@ -79,7 +82,26 @@ class BarChartWidget extends StatelessWidget {
               alignment: BarChartAlignment.spaceEvenly,
               minY: minY,
               maxY: maxY,
-              gridData: FlGridData(show: true,drawVerticalLine: false),
+              gridData: FlGridData(
+                show: true,
+                drawVerticalLine: false,
+                getDrawingHorizontalLine: (value) {
+                  return FlLine(
+                    color: Colors.grey[300],
+                    strokeWidth: 1,
+                  );
+                },
+                checkToShowHorizontalLine: (value) => true, // Always show horizontal lines
+              ),
+              extraLinesData: ExtraLinesData(
+                horizontalLines: [
+                  HorizontalLine(
+                    y: 0,
+                    color: const Color.fromARGB(255, 14, 14, 14), // Light grey color for the zero line
+                    strokeWidth: 0.5, // Thinner line
+                  ),
+                ],
+              ),
               titlesData: FlTitlesData(
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
