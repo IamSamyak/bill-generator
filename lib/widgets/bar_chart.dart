@@ -1,28 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 
 class BarChartWidget extends StatelessWidget {
   final Map<String, double> monthlyRevenue;
 
   const BarChartWidget({super.key, required this.monthlyRevenue});
 
-  // Month map without using intl
-  String getMonthShortName(String monthNum) {
-    const monthMap = {
-      '01': 'Jan',
-      '02': 'Feb',
-      '03': 'Mar',
-      '04': 'Apr',
-      '05': 'May',
-      '06': 'Jun',
-      '07': 'Jul',
-      '08': 'Aug',
-      '09': 'Sep',
-      '10': 'Oct',
-      '11': 'Nov',
-      '12': 'Dec',
-    };
-    return monthMap[monthNum] ?? '';
+  // Format date using intl
+  String formatMonthName(String yyyyMM) {
+    try {
+      DateTime parsedDate = DateFormat('yyyy-MM').parse(yyyyMM);
+      return DateFormat('MMM').format(parsedDate); // e.g., Jan, Feb
+    } catch (e) {
+      return yyyyMM;
+    }
   }
 
   @override
@@ -59,12 +51,12 @@ class BarChartWidget extends StatelessWidget {
           barRods: [
             BarChartRodData(
               toY: monthlyRevenue[entry.value]!,
-              color: Color(0xFF1A66BE), // Custom color
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(6), // Curvy top left
-                topRight: Radius.circular(6), // Curvy top right
+              color: const Color(0xFF1A66BE), // Custom color
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(6),
+                topRight: Radius.circular(6),
               ),
-              width: 24, // Increased bar width
+              width: 24,
             ),
           ],
         );
@@ -91,14 +83,14 @@ class BarChartWidget extends StatelessWidget {
                     strokeWidth: 1,
                   );
                 },
-                checkToShowHorizontalLine: (value) => true, // Always show horizontal lines
+                checkToShowHorizontalLine: (value) => true,
               ),
               extraLinesData: ExtraLinesData(
                 horizontalLines: [
                   HorizontalLine(
                     y: 0,
-                    color: const Color.fromARGB(255, 14, 14, 14), // Light grey color for the zero line
-                    strokeWidth: 0.5, // Thinner line
+                    color: const Color.fromARGB(255, 14, 14, 14),
+                    strokeWidth: 0.5,
                   ),
                 ],
               ),
@@ -121,13 +113,11 @@ class BarChartWidget extends StatelessWidget {
                     getTitlesWidget: (value, meta) {
                       if (value.toInt() >= 0 &&
                           value.toInt() < reversedMonths.length) {
-                        String raw = reversedMonths[value.toInt()];
-                        List<String> parts = raw.split('-');
-                        String monthName = getMonthShortName(parts[1]);
+                        String label = formatMonthName(reversedMonths[value.toInt()]);
                         return Padding(
                           padding: const EdgeInsets.only(top: 6.0),
                           child: Text(
-                            monthName,
+                            label,
                             style: const TextStyle(fontSize: 12),
                           ),
                         );

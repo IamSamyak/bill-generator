@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'dart:math'; // Import to generate random colors
+import 'package:intl/intl.dart'; // Updated for date formatting
+import 'dart:math'; // For generating random colors
 
 class BillItemWidget extends StatelessWidget {
   final Map<String, dynamic> bill;
@@ -32,45 +33,39 @@ class BillItemWidget extends StatelessWidget {
     }
   }
 
+  // Generate a random light color
   Color _generateRandomLightColor() {
     final Random random = Random();
 
-    int red = random.nextInt(156) + 100; // Ensures red is between 100-255
-    int green = random.nextInt(156) + 100; // Ensures green is between 100-255
-    int blue = random.nextInt(156) + 100; // Ensures blue is between 100-255
+    int red = random.nextInt(156) + 100;
+    int green = random.nextInt(156) + 100;
+    int blue = random.nextInt(156) + 100;
 
     return Color.fromRGBO(red, green, blue, 1.0);
   }
 
-  // Method to format the date as "MMM dd, yyyy"
+  // Format the date using intl
   String _formatDate(String dateString) {
-    List<String> months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-
-    List<String> dateParts = dateString.split('-');
-    if (dateParts.length == 3) {
-      String year = dateParts[0];
-      int monthIndex = int.tryParse(dateParts[1]) ?? 1;
-      String day = dateParts[2];
-
-      return '${months[monthIndex - 1]} $day, $year'; // Format: "MMM dd, yyyy"
+    try {
+      DateTime parsedDate = DateTime.parse(dateString);
+      return DateFormat('MMM dd, yyyy').format(parsedDate);
+    } catch (e) {
+      debugPrint('Date parsing error: $e');
+      return dateString;
     }
-    return dateString; // Return original string if parsing fails
   }
 
   @override
   Widget build(BuildContext context) {
-                print('Bills: $bill');
+    print('Bills: $bill');
     return Column(
       children: [
         Row(
           children: [
             GestureDetector(
-              onTap: () => _dialNumber(bill['mobileNumber']), // Trigger phone dialing on tap
+              onTap: () => _dialNumber(bill['mobileNumber']),
               child: CircleAvatar(
-                backgroundColor: _generateRandomLightColor(), // Assign random color to background
+                backgroundColor: _generateRandomLightColor(),
                 child: Text(
                   bill['customerName'][0],
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -97,22 +92,27 @@ class BillItemWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '₹${bill['netAmount']}',
+                  '₹${bill['amount']}',
                   style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
                 ),
                 const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: bill['payStatus'] == 'Paid' ? Colors.green.shade100 : Colors.red.shade100,
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: Text(
-                    bill['payStatus'],
-                    style: TextStyle(
-                      color: bill['payStatus'] == 'Paid' ? Colors.green[800] : Colors.red[800],
-                      fontWeight: FontWeight.bold,
-                      fontSize: 11,
+                GestureDetector(
+                  onTap: () {
+                    debugPrint('View bill tapped for: ${bill['customerName']}');
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade100,
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: Text(
+                      'View Bill',
+                      style: TextStyle(
+                        color: Colors.blue.shade800,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                      ),
                     ),
                   ),
                 ),

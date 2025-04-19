@@ -1,3 +1,5 @@
+import 'package:bill_generator/pages/AddCategoriesPage.dart';
+import 'package:bill_generator/pages/UpdateBill.dart';
 import 'package:bill_generator/pages/menu_screen_page.dart';
 import 'package:bill_generator/pages/reports_page.dart';
 import 'package:bill_generator/pages/share_images_page.dart';
@@ -106,6 +108,12 @@ class _MainScreenState extends State<MainScreen> {
         break;
       case 'Share-Media':
         bodyWidget = ShareImagesPage();
+        break;
+      case 'UpdateBills':
+        bodyWidget = UpdateBillsPage();
+        break;
+      case 'UpdateCategories':
+        bodyWidget = OperateCategories();
         break;
       default:
         bodyWidget = HomePage(onNavigate: _navigateToPage);

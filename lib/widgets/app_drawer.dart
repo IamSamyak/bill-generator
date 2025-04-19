@@ -13,9 +13,13 @@ class AppDrawer extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          const DrawerHeader(
-            decoration: BoxDecoration(color: kMainColor),
-            child: Text(
+          // Custom header with reduced height
+          Container(
+            height: 100,
+            color: kMainColor,
+            alignment: Alignment.bottomLeft,
+            padding: const EdgeInsets.all(16),
+            child: const Text(
               'Menu',
               style: TextStyle(
                 color: Colors.white,
@@ -24,6 +28,23 @@ class AppDrawer extends StatelessWidget {
               ),
             ),
           ),
+          // Newly added options placed above
+          ListTile(
+            leading: const Icon(Icons.create_sharp),
+            title: const Text('Update Categories'),
+            onTap: () => onNavigate('UpdateCategories'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.receipt_long),
+            title: const Text('Update Bills'),
+            onTap: () => onNavigate('UpdateBills'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.receipt_long),
+            title: const Text('Pending Bills'),
+            onTap: () => onNavigate('UpdateBills'),
+          ),
+          const Divider(),
           ListTile(
             leading: const Icon(Icons.home),
             title: const Text('Home'),
