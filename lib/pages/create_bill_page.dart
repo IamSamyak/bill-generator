@@ -1,14 +1,15 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:url_launcher/url_launcher.dart';
+// import 'package:open_file/open_file.dart';
+
 import '../widgets/order_summary.dart';
 import '../widgets/CustomerInputForm.dart';
 import '../widgets/item_input_row.dart';
-import 'package:url_launcher/url_launcher.dart';
-
-final apiKey = dotenv.env['API_KEY'] ?? '';
-final projectId = dotenv.env['PROJECT_ID'] ?? '';
+import '../services/bill_service.dart';
 
 class CreateBillPage extends StatefulWidget {
   final VoidCallback onBack;
@@ -24,8 +25,9 @@ class _CreateBillPageState extends State<CreateBillPage> {
   final TextEditingController _mobileController = TextEditingController();
 
   String _payStatus = 'Paid';
-
   List<Map<String, TextEditingController>> itemControllers = [];
+  final BillService _billService = BillService();
+  File? generatedPdf;
 
   @override
   void initState() {
@@ -55,7 +57,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
         last["price"]!.text.isNotEmpty;
   }
 
-  void _generateBill() async {
+  void _handleGenerateBill() async {
     if (_nameController.text.isEmpty || _mobileController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -104,106 +106,53 @@ class _CreateBillPageState extends State<CreateBillPage> {
       "soldBy": "Akash",
       "createdAt": DateTime.now().toIso8601String(),
       "updatedAt": DateTime.now().toIso8601String(),
-      "purchaseList": validItems.map((item) {
-        return {
-          "productCategory": item["productCategory"],
-          "productName": item["productName"],
-          "price": item["price"],
-          "quantity": item["quantity"],
-          "total": (item["price"] as double) * (item["quantity"] as int),
-        };
-      }).toList(),
+      "purchaseList": validItems,
     };
 
-    try {
-      final Uri url = Uri.parse(
-        "https://firestore.googleapis.com/v1/projects/$projectId/databases/(default)/documents/bills?key=$apiKey",
-      );
+    bool isSuccess = await _billService.uploadBillToFirebase(billData);
+    generatedPdf = await _billService.generatePdfAndSave(billData);
 
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          "fields": billData.map((key, value) {
-            if (value is String) {
-              return MapEntry(key, {"stringValue": value});
-            } else if (value is num) {
-              return MapEntry(key, {"doubleValue": value});
-            } else if (value is List) {
-              return MapEntry(key, {
-                "arrayValue": {
-                  "values": value.map((item) {
-                    return {
-                      "mapValue": {
-                        "fields": item.map((k, v) {
-                          return MapEntry(
-                            k,
-                            v is num
-                                ? {"doubleValue": v}
-                                : {"stringValue": v.toString()},
-                          );
-                        }),
-                      },
-                    };
-                  }).toList(),
-                },
-              });
-            } else {
-              return MapEntry(key, {"stringValue": value.toString()});
-            }
-          }),
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("✅ Bill generated for ${_nameController.text}"),
-          ),
-        );
-        setState(() {
-          _nameController.clear();
-          _mobileController.clear();
-          itemControllers.clear();
-          _addItemControllers();
-          _payStatus = 'Paid'; // reset status
-        });
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("❌ Failed to store bill")),
-        );
-        print("Error: ${response.body}");
-      }
-    } catch (e) {
+    if (isSuccess) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("❌ Exception: $e")),
+        SnackBar(content: Text("✅ Bill generated for ${_nameController.text}")),
       );
+      setState(() {
+        _nameController.clear();
+        _mobileController.clear();
+        itemControllers.clear();
+        _addItemControllers();
+        _payStatus = 'Paid';
+      });
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("❌ Failed to store bill")));
     }
   }
 
-  void _shareOnWhatsApp() {
-    final String message = "🧾 Bill generated for: ${_nameController.text}\n"
-        "📞 Mobile: ${_mobileController.text}\n"
-        "📦 Items: ${itemControllers.length}\n"
-        "💰 Total: ₹${_calculateTotal(itemControllers.map((c) {
-          return {
-            "price": double.tryParse(c["price"]!.text) ?? 0,
-            "quantity": int.tryParse(c["quantity"]!.text) ?? 0,
-          };
-        }).toList()).toStringAsFixed(2)}";
+  void _shareOnWhatsApp() async {
+    if (generatedPdf == null || !await generatedPdf!.exists()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("⚠️ No bill PDF available to share")),
+      );
+      return;
+    }
 
+    final String message = "🧾 Bill for ${_nameController.text} is ready.";
     final url = "https://wa.me/?text=${Uri.encodeComponent(message)}";
-    launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+
+    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
   }
 
   @override
   Widget build(BuildContext context) {
-    final items = itemControllers.map((c) {
-      return {
-        "price": double.tryParse(c["price"]!.text) ?? 0,
-        "quantity": int.tryParse(c["quantity"]!.text) ?? 0,
-      };
-    }).toList();
+    final items =
+        itemControllers.map((c) {
+          return {
+            "price": double.tryParse(c["price"]!.text) ?? 0,
+            "quantity": int.tryParse(c["quantity"]!.text) ?? 0,
+          };
+        }).toList();
 
     final total = _calculateTotal(items);
     final discount = total * 0.10;
@@ -215,7 +164,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CustomerInputForm(  // Use the new widget
+            CustomerInputForm(
               nameController: _nameController,
               mobileController: _mobileController,
               payStatus: _payStatus,
@@ -253,7 +202,9 @@ class _CreateBillPageState extends State<CreateBillPage> {
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text("⚠️ Fill all fields before adding new item"),
+                        content: Text(
+                          "⚠️ Fill all fields before adding new item",
+                        ),
                       ),
                     );
                   }
@@ -271,12 +222,15 @@ class _CreateBillPageState extends State<CreateBillPage> {
               finalAmount: finalAmount,
             ),
             const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: _generateBill,
+           ElevatedButton.icon(
+              onPressed: _handleGenerateBill,
               icon: const Icon(Icons.receipt_long, color: Colors.white),
               label: const Text(
                 "Generate Bill",
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF1864c3),
@@ -292,18 +246,20 @@ class _CreateBillPageState extends State<CreateBillPage> {
               icon: const Icon(Icons.share, color: Colors.white),
               label: const Text(
                 "Share on WhatsApp",
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1864c3),
+                backgroundColor: const Color(0xFF25D366),
                 minimumSize: const Size.fromHeight(48),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
             ),
-            const SizedBox(height: 10),
- ],
+          ],
         ),
       ),
     );

@@ -1,8 +1,7 @@
-import 'dart:convert';
 import 'package:bill_generator/widgets/bill_list_history_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:bill_generator/services/bill_service.dart';
+import 'package:intl/intl.dart'; // <-- Added for date formatting
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
@@ -52,15 +51,7 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   String _getCategory(DateTime billDate) {
-    return '${_getMonthName(billDate.month)} ${billDate.year}';
-  }
-
-  String _getMonthName(int month) {
-    const monthNames = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
-    return monthNames[month - 1];
+    return DateFormat('MMMM yyyy').format(billDate); // e.g., January 2024
   }
 
   @override

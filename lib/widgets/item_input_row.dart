@@ -20,11 +20,32 @@ class ItemInputRow extends StatelessWidget {
         children: [
           Expanded(
             flex: 3,
-            child: TextField(
-              controller: productCategoryController,
+            child: InputDecorator(
               decoration: const InputDecoration(
                 labelText: "Item Type",
                 border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: productCategoryController.text.isEmpty
+                      ? null
+                      : productCategoryController.text,
+                  items: const [
+                    DropdownMenuItem(value: "Shirt", child: Text("Shirt")),
+                    DropdownMenuItem(value: "Pant", child: Text("Pant")),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      productCategoryController.text = value;
+                    }
+                  },
+                  isExpanded: true,
+                  dropdownColor: Colors.white,
+                  borderRadius: BorderRadius.all(Radius.circular(4)),
+                  menuWidth: 122,
+                  elevation: 1,
+                ),
               ),
             ),
           ),
