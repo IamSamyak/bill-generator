@@ -5,6 +5,8 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:url_launcher/url_launcher.dart';
 // import 'package:open_file/open_file.dart';
+import 'package:whatsapp_share2/whatsapp_share2.dart';
+
 
 import '../widgets/order_summary.dart';
 import '../widgets/CustomerInputForm.dart';
@@ -130,19 +132,26 @@ class _CreateBillPageState extends State<CreateBillPage> {
     }
   }
 
-  void _shareOnWhatsApp() async {
-    if (generatedPdf == null || !await generatedPdf!.exists()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("⚠️ No bill PDF available to share")),
-      );
-      return;
-    }
-
-    final String message = "🧾 Bill for ${_nameController.text} is ready.";
-    final url = "https://wa.me/?text=${Uri.encodeComponent(message)}";
-
-    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+void _shareOnWhatsApp() async {
+  if (generatedPdf == null || !await generatedPdf!.exists()) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("⚠️ No bill PDF available to share")),
+    );
+    return;
   }
+
+  try {
+    await WhatsappShare.shareFile(
+      text: '📄 Here is your bill PDF.',
+      phone: '919881102237', // Include country code, but no '+' sign
+      filePath: [generatedPdf!.path],
+    );
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("❌ Failed to share PDF on WhatsApp: $e")),
+    );
+  }
+}
 
   @override
   Widget build(BuildContext context) {

@@ -110,9 +110,11 @@ class _MainScreenState extends State<MainScreen> {
         bodyWidget = ShareImagesPage();
         break;
       case 'UpdateBills':
+        Navigator.pop(context);
         bodyWidget = UpdateBillsPage();
         break;
       case 'UpdateCategories':
+        Navigator.pop(context);
         bodyWidget = OperateCategories();
         break;
       default:
@@ -124,11 +126,19 @@ class _MainScreenState extends State<MainScreen> {
         title: const Text('Bill Generator'),
         centerTitle: true,
         leading: Builder(
-          builder:
-              (context) => IconButton(
+          builder: (context) {
+            if (_currentPage == 'CreateBill') {
+              return IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () => _navigateToPage('Home'),
+              );
+            } else {
+              return IconButton(
                 icon: const Icon(Icons.menu),
                 onPressed: () => Scaffold.of(context).openDrawer(),
-              ),
+              );
+            }
+          },
         ),
       ),
       drawer: AppDrawer(onNavigate: _navigateToPage),
