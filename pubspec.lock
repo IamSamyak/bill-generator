@@ -717,11 +717,11 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.5.1"
-  whatsapp_share2:
+  whatsapp_share:
     dependency: "direct main"
     description:
-      name: whatsapp_share2
-      sha256: d0b84f44a46b4e191ca659293b5e56fb1b8352a56abe048fdb14bf26535d847e
+      name: whatsapp_share
+      sha256: d1884f302a52d9f400bc3d7d4274b77aad83424e08f425351cea8d13b4cb8649
       url: "https://pub.dev"
     source: hosted
     version: "2.0.2"

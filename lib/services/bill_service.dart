@@ -180,7 +180,7 @@ class BillService {
                         return [
                           item["productCategory"].toString(),
                           item["quantity"].toString(),
-                          "₹${item["price"]}",
+                          "${item["price"]}",
                         ];
                       }).toList(),
                   headerStyle: pw.TextStyle(
@@ -209,15 +209,15 @@ class BillService {
                 style: pw.TextStyle(fontSize: 10),
               ),
               pw.Text(
-                "Total: ₹${billData["totalAmount"]}",
+                "Total: ${billData["totalAmount"]}",
                 style: pw.TextStyle(fontSize: 10),
               ),
               pw.Text(
-                "Discount: ₹${billData["discount"]}",
+                "Discount: ${billData["discount"]}",
                 style: pw.TextStyle(fontSize: 10),
               ),
               pw.Text(
-                "Final Amount: ₹${billData["netAmount"]}",
+                "Final Amount: ${billData["netAmount"]}",
                 style: pw.TextStyle(fontSize: 10),
               ),
             ],
@@ -226,11 +226,18 @@ class BillService {
       ),
     );
 
-    final dir = await getTemporaryDirectory();
-    final file = File(
-      '${dir.path}/bill_${DateTime.now().millisecondsSinceEpoch}.pdf',
-    );
+     try {
+    final dir = await getExternalStorageDirectory(); // Shareable directory
+    if (dir == null) return null;
+
+    final filePath = '${dir.path}/bill_${DateTime.now().millisecondsSinceEpoch}.pdf';
+    final file = File(filePath);
+
     await file.writeAsBytes(await pdf.save());
     return file;
+  } catch (e) {
+    print("❌ Error saving PDF: $e");
+    return null;
+  }
   }
 }

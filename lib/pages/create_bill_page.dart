@@ -1,11 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:pdf/pdf.dart';
-import 'package:pdf/widgets.dart' as pw;
-import 'package:url_launcher/url_launcher.dart';
 // import 'package:open_file/open_file.dart';
-import 'package:whatsapp_share2/whatsapp_share2.dart';
+import 'package:whatsapp_share/whatsapp_share.dart';
 
 
 import '../widgets/order_summary.dart';
@@ -139,14 +135,20 @@ void _shareOnWhatsApp() async {
     );
     return;
   }
-
+  print("generated pdf is $generatedPdf is ${generatedPdf!.path}");
   try {
+    // bool? response = await WhatsappShare.shareFile(
+    //   text: ' Here is your bill PDF.',
+    //   phone: '919881102237', // Include country code, but no '+' sign
+    //   filePath: [generatedPdf!.path],
+    // );
     await WhatsappShare.shareFile(
-      text: '📄 Here is your bill PDF.',
-      phone: '919881102237', // Include country code, but no '+' sign
+      phone: '919881102237',
       filePath: [generatedPdf!.path],
     );
+    // print('success $response');
   } catch (e) {
+      print("error $e");
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text("❌ Failed to share PDF on WhatsApp: $e")),
     );
