@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class ItemInputRow extends StatelessWidget {
+class ItemInputRow extends StatefulWidget {
   final TextEditingController productCategoryController;
   final TextEditingController quantityController;
   final TextEditingController priceController;
@@ -12,6 +12,11 @@ class ItemInputRow extends StatelessWidget {
     required this.priceController,
   }) : super(key: key);
 
+  @override
+  _ItemInputRowState createState() => _ItemInputRowState();
+}
+
+class _ItemInputRowState extends State<ItemInputRow> {
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -28,21 +33,23 @@ class ItemInputRow extends StatelessWidget {
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
-                  value: productCategoryController.text.isEmpty
+                  value: widget.productCategoryController.text.isEmpty
                       ? null
-                      : productCategoryController.text,
+                      : widget.productCategoryController.text,
                   items: const [
                     DropdownMenuItem(value: "Shirt", child: Text("Shirt")),
                     DropdownMenuItem(value: "Pant", child: Text("Pant")),
                   ],
                   onChanged: (value) {
                     if (value != null) {
-                      productCategoryController.text = value;
+                      setState(() {
+                        widget.productCategoryController.text = value;
+                      });
                     }
                   },
                   isExpanded: true,
                   dropdownColor: Colors.white,
-                  borderRadius: BorderRadius.all(Radius.circular(4)),
+                  borderRadius: const BorderRadius.all(Radius.circular(4)),
                   menuWidth: 122,
                   elevation: 1,
                 ),
@@ -53,7 +60,7 @@ class ItemInputRow extends StatelessWidget {
           Expanded(
             flex: 2,
             child: TextField(
-              controller: quantityController,
+              controller: widget.quantityController,
               decoration: const InputDecoration(
                 labelText: "Qty",
                 border: OutlineInputBorder(),
@@ -65,7 +72,7 @@ class ItemInputRow extends StatelessWidget {
           Expanded(
             flex: 3,
             child: TextField(
-              controller: priceController,
+              controller: widget.priceController,
               decoration: const InputDecoration(
                 labelText: "Price",
                 border: OutlineInputBorder(),

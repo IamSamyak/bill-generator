@@ -1,13 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-// import 'package:open_file/open_file.dart';
 import 'package:whatsapp_share/whatsapp_share.dart';
-
-
 import '../widgets/order_summary.dart';
 import '../widgets/CustomerInputForm.dart';
 import '../widgets/item_input_row.dart';
 import '../services/bill_service.dart';
+import 'pdf_viewer_page.dart';
 
 class CreateBillPage extends StatefulWidget {
   final VoidCallback onBack;
@@ -23,6 +21,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
   final TextEditingController _mobileController = TextEditingController();
 
   String _payStatus = 'Paid';
+  bool _billUploadSuccess = false;
   List<Map<String, TextEditingController>> itemControllers = [];
   final BillService _billService = BillService();
   File? generatedPdf;
@@ -55,14 +54,26 @@ class _CreateBillPageState extends State<CreateBillPage> {
         last["price"]!.text.isNotEmpty;
   }
 
-  void _handleGenerateBill() async {
-    if (_nameController.text.isEmpty || _mobileController.text.isEmpty) {
+  // Validate the name and mobile number
+  bool _validateInputs() {
+    if (_nameController.text.length < 3) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("❗ Please enter customer name and mobile number"),
-        ),
+        const SnackBar(content: Text("❗ Name should be at least 3 characters")),
       );
-      return;
+      return false;
+    }
+    if (_mobileController.text.length != 10) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("❗ Mobile number should be 10 digits")),
+      );
+      return false;
+    }
+    return true;
+  }
+
+  Future<bool> _generateBill() async {
+    if (!_validateInputs()) {
+      return false;
     }
 
     List<Map<String, dynamic>> validItems = [];
@@ -85,7 +96,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("❗ Please enter at least one valid item")),
       );
-      return;
+      return false;
     }
 
     double total = _calculateTotal(validItems);
@@ -108,12 +119,28 @@ class _CreateBillPageState extends State<CreateBillPage> {
     };
 
     bool isSuccess = await _billService.uploadBillToFirebase(billData);
+    setState(() {
+      _billUploadSuccess = isSuccess;
+    });
     generatedPdf = await _billService.generatePdfAndSave(billData);
+    return isSuccess;
+  }
 
-    if (isSuccess) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("✅ Bill generated for ${_nameController.text}")),
-      );
+  void _viewPdf() async {
+    if (generatedPdf == null || !await generatedPdf!.exists()) {
+      bool result = await _generateBill();
+      if (result == false) return;
+    }
+    if (_billUploadSuccess) {
+      if (generatedPdf != null && await generatedPdf!.exists()) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PdfViewerPage(path: generatedPdf!.path),
+          ),
+        );
+      }
+
       setState(() {
         _nameController.clear();
         _mobileController.clear();
@@ -128,32 +155,24 @@ class _CreateBillPageState extends State<CreateBillPage> {
     }
   }
 
-void _shareOnWhatsApp() async {
-  if (generatedPdf == null || !await generatedPdf!.exists()) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("⚠️ No bill PDF available to share")),
-    );
-    return;
-  }
-  print("generated pdf is $generatedPdf is ${generatedPdf!.path}");
-  try {
-    // bool? response = await WhatsappShare.shareFile(
-    //   text: ' Here is your bill PDF.',
-    //   phone: '919881102237', // Include country code, but no '+' sign
-    //   filePath: [generatedPdf!.path],
-    // );
-    await WhatsappShare.shareFile(
-      phone: '919881102237',
-      filePath: [generatedPdf!.path],
-    );
-    // print('success $response');
-  } catch (e) {
+  void _shareOnWhatsApp() async {
+    if (generatedPdf == null || !await generatedPdf!.exists()) {
+      bool result = await _generateBill();
+      if (result == false) return;
+    }
+
+    try {
+      await WhatsappShare.shareFile(
+        phone: '919881102237',
+        filePath: [generatedPdf!.path],
+      );
+    } catch (e) {
       print("error $e");
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("❌ Failed to share PDF on WhatsApp: $e")),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("❌ Failed to share PDF on WhatsApp: $e")),
+      );
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -233,8 +252,8 @@ void _shareOnWhatsApp() async {
               finalAmount: finalAmount,
             ),
             const SizedBox(height: 16),
-           ElevatedButton.icon(
-              onPressed: _handleGenerateBill,
+            ElevatedButton.icon(
+              onPressed: _viewPdf,
               icon: const Icon(Icons.receipt_long, color: Colors.white),
               label: const Text(
                 "Generate Bill",
