@@ -78,7 +78,7 @@ class _MainScreenState extends State<MainScreen> {
           _navigateToPage('Home');
           break;
         case 1:
-          _navigateToPage('History');
+          _navigateToPage('History-Paid');
           break;
         case 2:
           _navigateToPage('Reports');
@@ -97,8 +97,12 @@ class _MainScreenState extends State<MainScreen> {
       case 'CreateBill':
         bodyWidget = CreateBillPage(onBack: () => _navigateToPage('Home'));
         break;
-      case 'History':
-        bodyWidget = HistoryPage();
+      case 'History-Paid':
+        bodyWidget = HistoryPage(payStatusParam:"Paid");
+        break;
+      case 'History-Unpaid':
+        Navigator.pop(context);
+        bodyWidget = HistoryPage(payStatusParam:"Unpaid");
         break;
       case 'Reports':
         bodyWidget = ReportsPage();

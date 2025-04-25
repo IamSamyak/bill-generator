@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:bill_generator/widgets/bill_action_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:whatsapp_share/whatsapp_share.dart';
 import '../widgets/order_summary.dart';
@@ -25,6 +26,8 @@ class _CreateBillPageState extends State<CreateBillPage> {
   List<Map<String, TextEditingController>> itemControllers = [];
   final BillService _billService = BillService();
   File? generatedPdf;
+
+  double finalAmount = 0;
 
   @override
   void initState() {
@@ -54,7 +57,6 @@ class _CreateBillPageState extends State<CreateBillPage> {
         last["price"]!.text.isNotEmpty;
   }
 
-  // Validate the name and mobile number
   bool _validateInputs() {
     if (_nameController.text.length < 3) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -69,6 +71,12 @@ class _CreateBillPageState extends State<CreateBillPage> {
       return false;
     }
     return true;
+  }
+
+  void _removeItem(int index) {
+    setState(() {
+      itemControllers.removeAt(index);
+    });
   }
 
   Future<bool> _generateBill() async {
@@ -101,7 +109,9 @@ class _CreateBillPageState extends State<CreateBillPage> {
 
     double total = _calculateTotal(validItems);
     double discount = total * 0.10;
-    double finalAmount = total - discount;
+
+    // Calculate finalAmount, now we use the state value of finalAmount
+    finalAmount = total - discount;
 
     final billData = {
       "customerName": _nameController.text.trim(),
@@ -186,7 +196,9 @@ class _CreateBillPageState extends State<CreateBillPage> {
 
     final total = _calculateTotal(items);
     final discount = total * 0.10;
-    final finalAmount = total - discount;
+
+    // Use finalAmount from state
+    finalAmount = total - discount;
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -215,34 +227,77 @@ class _CreateBillPageState extends State<CreateBillPage> {
               ),
             ),
             const SizedBox(height: 10),
-            ...itemControllers.map((controller) {
+            ...itemControllers.asMap().entries.map((entry) {
+              int index = entry.key;
+              var controller = entry.value;
               return ItemInputRow(
                 productCategoryController: controller["productCategory"]!,
                 quantityController: controller["quantity"]!,
                 priceController: controller["price"]!,
+                onRemove:
+                    () => _removeItem(index), // 👈 pass the index to remove
+                showRemoveIcon:
+                    itemControllers.length >
+                    1, // only show remove if more than one
               );
-            }).toList(),
+            }),
+
             const SizedBox(height: 10),
             Align(
               alignment: Alignment.centerRight,
-              child: GestureDetector(
-                onTap: () {
-                  if (_canAddMore()) {
-                    _addItemControllers();
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          "⚠️ Fill all fields before adding new item",
-                        ),
-                      ),
-                    );
-                  }
-                },
-                child: const CircleAvatar(
-                  backgroundColor: Color(0xFF0f58b9),
-                  child: Icon(Icons.add, color: Colors.white),
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      final last = itemControllers.last;
+                      final filled =
+                          last["productCategory"]!.text.isNotEmpty &&
+                          last["quantity"]!.text.isNotEmpty &&
+                          last["price"]!.text.isNotEmpty;
+                      if (filled) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("✅ Current item row is valid."),
+                          ),
+                        );
+                        setState(() {}); // Refresh total
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "⚠️ Please fill all fields to confirm this item",
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    child: const CircleAvatar(
+                      backgroundColor: Color(0xFF28a745),
+                      child: Icon(Icons.done, color: Colors.white),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  GestureDetector(
+                    onTap: () {
+                      if (_canAddMore()) {
+                        _addItemControllers();
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "⚠️ Fill all fields before adding new item",
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    child: const CircleAvatar(
+                      backgroundColor: Color(0xFF0f58b9),
+                      child: Icon(Icons.add, color: Colors.white),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 20),
@@ -251,43 +306,10 @@ class _CreateBillPageState extends State<CreateBillPage> {
               discount: discount,
               finalAmount: finalAmount,
             ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: _viewPdf,
-              icon: const Icon(Icons.receipt_long, color: Colors.white),
-              label: const Text(
-                "Generate Bill",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1864c3),
-                minimumSize: const Size.fromHeight(48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            ElevatedButton.icon(
-              onPressed: _shareOnWhatsApp,
-              icon: const Icon(Icons.share, color: Colors.white),
-              label: const Text(
-                "Share on WhatsApp",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF25D366),
-                minimumSize: const Size.fromHeight(48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
+            const SizedBox(height: 20),
+            BillActionButtons(
+              onGeneratePressed: _viewPdf,
+              onSharePressed: _shareOnWhatsApp,
             ),
           ],
         ),

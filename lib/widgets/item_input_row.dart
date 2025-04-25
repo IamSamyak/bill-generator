@@ -4,12 +4,16 @@ class ItemInputRow extends StatefulWidget {
   final TextEditingController productCategoryController;
   final TextEditingController quantityController;
   final TextEditingController priceController;
+  final VoidCallback onRemove; // Callback to trigger remove action
+  final bool showRemoveIcon;
 
   const ItemInputRow({
     Key? key,
     required this.productCategoryController,
     required this.quantityController,
     required this.priceController,
+    required this.onRemove, // Required in constructor
+    this.showRemoveIcon = false,
   }) : super(key: key);
 
   @override
@@ -29,13 +33,17 @@ class _ItemInputRowState extends State<ItemInputRow> {
               decoration: const InputDecoration(
                 labelText: "Item Type",
                 border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 5,
+                ),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
-                  value: widget.productCategoryController.text.isEmpty
-                      ? null
-                      : widget.productCategoryController.text,
+                  value:
+                      widget.productCategoryController.text.isEmpty
+                          ? null
+                          : widget.productCategoryController.text,
                   items: const [
                     DropdownMenuItem(value: "Shirt", child: Text("Shirt")),
                     DropdownMenuItem(value: "Pant", child: Text("Pant")),
@@ -80,6 +88,15 @@ class _ItemInputRowState extends State<ItemInputRow> {
               keyboardType: TextInputType.number,
             ),
           ),
+          const SizedBox(width: 8),
+          if (widget.showRemoveIcon)
+            GestureDetector(
+              onTap: widget.onRemove,
+              child: const CircleAvatar(
+                backgroundColor: Color(0xFFD32F2F),
+                child: Icon(Icons.close, color: Colors.white),
+              ),
+            ),
         ],
       ),
     );

@@ -4,7 +4,8 @@ import 'package:bill_generator/services/bill_service.dart';
 import 'package:intl/intl.dart'; // <-- Added for date formatting
 
 class HistoryPage extends StatefulWidget {
-  const HistoryPage({super.key});
+  String payStatusParam;
+  HistoryPage({super.key, required this.payStatusParam});
 
   @override
   _HistoryPageState createState() => _HistoryPageState();
@@ -25,7 +26,7 @@ class _HistoryPageState extends State<HistoryPage> {
 
   Future<void> _fetchAndCategorizeBills() async {
     try {
-      final bills = await billService.fetchBills();
+      final bills = await billService.fetchBills(payStatusFilter: widget.payStatusParam);
       _categorizeBills(bills);
     } catch (e) {
       setState(() {

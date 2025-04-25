@@ -63,6 +63,7 @@ class CustomerInputForm extends StatelessWidget {
           decoration: const InputDecoration(
             border: OutlineInputBorder(),
           ),
+          dropdownColor: Colors.white, 
           items: ['Paid', 'Unpaid'].map((status) {
             return DropdownMenuItem<String>(
               value: status,
