@@ -24,7 +24,7 @@ class CustomerInputForm extends StatelessWidget {
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF184373),
+            color: Color(0xFF374151),
           ),
         ),
         TextField(
@@ -39,7 +39,7 @@ class CustomerInputForm extends StatelessWidget {
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF184373),
+            color: Color(0xFF374151),
           ),
         ),
         TextField(
@@ -55,7 +55,7 @@ class CustomerInputForm extends StatelessWidget {
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF184373),
+            color: Color(0xFF374151),
           ),
         ),
         DropdownButtonFormField<String>(

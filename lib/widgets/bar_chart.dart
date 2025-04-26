@@ -17,6 +17,14 @@ class BarChartWidget extends StatelessWidget {
     }
   }
 
+  // Function to format y-axis labels in the 2.5k, 3k format
+  String formatYAxisLabel(double value) {
+    if (value >= 1000) {
+      return '${(value / 1000).toStringAsFixed(1)}k';
+    }
+    return value.toStringAsFixed(0);
+  }
+
   @override
   Widget build(BuildContext context) {
     List<String> months = monthlyRevenue.keys.toList();
@@ -44,24 +52,23 @@ class BarChartWidget extends StatelessWidget {
     minY = minY > 0 ? 0 : (minY ~/ interval) * interval;
     maxY = ((maxY / interval).ceil()) * interval;
 
-    List<BarChartGroupData> barGroups = reversedMonths.asMap().entries.map(
-      (entry) {
-        return BarChartGroupData(
-          x: entry.key,
-          barRods: [
-            BarChartRodData(
-              toY: monthlyRevenue[entry.value]!,
-              color: const Color(0xFF1A66BE), // Custom color
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(6),
-                topRight: Radius.circular(6),
+    List<BarChartGroupData> barGroups =
+        reversedMonths.asMap().entries.map((entry) {
+          return BarChartGroupData(
+            x: entry.key,
+            barRods: [
+              BarChartRodData(
+                toY: monthlyRevenue[entry.value]!,
+                color: const Color(0xFF1A66BE), // Custom color
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(6),
+                  topRight: Radius.circular(6),
+                ),
+                width: 24,
               ),
-              width: 24,
-            ),
-          ],
-        );
-      },
-    ).toList();
+            ],
+          );
+        }).toList();
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -78,13 +85,13 @@ class BarChartWidget extends StatelessWidget {
                 show: true,
                 drawVerticalLine: false,
                 getDrawingHorizontalLine: (value) {
-                  return FlLine(
-                    color: Colors.grey[300],
-                    strokeWidth: 1,
-                  );
+                  return FlLine(color: Colors.grey[300], strokeWidth: 1);
                 },
-                checkToShowHorizontalLine: (value) => true,
+                checkToShowHorizontalLine:
+                    (value) => value >= minY,
+                horizontalInterval: (maxY - minY) / 5,
               ),
+
               extraLinesData: ExtraLinesData(
                 horizontalLines: [
                   HorizontalLine(
@@ -99,10 +106,12 @@ class BarChartWidget extends StatelessWidget {
                   sideTitles: SideTitles(
                     showTitles: true,
                     reservedSize: 40,
-                    interval: interval,
+                    interval: (maxY - minY) / 5,
                     getTitlesWidget: (value, meta) {
-                      return Text("₹${value.toInt()}",
-                          style: const TextStyle(fontSize: 12));
+                      return Text(
+                        "${formatYAxisLabel(value)}",
+                        style: const TextStyle(fontSize: 12),
+                      );
                     },
                   ),
                 ),
@@ -113,7 +122,9 @@ class BarChartWidget extends StatelessWidget {
                     getTitlesWidget: (value, meta) {
                       if (value.toInt() >= 0 &&
                           value.toInt() < reversedMonths.length) {
-                        String label = formatMonthName(reversedMonths[value.toInt()]);
+                        String label = formatMonthName(
+                          reversedMonths[value.toInt()],
+                        );
                         return Padding(
                           padding: const EdgeInsets.only(top: 6.0),
                           child: Text(
@@ -126,8 +137,12 @@ class BarChartWidget extends StatelessWidget {
                     },
                   ),
                 ),
-                topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                topTitles: AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                rightTitles: AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
               ),
               borderData: FlBorderData(show: false),
               barGroups: barGroups,

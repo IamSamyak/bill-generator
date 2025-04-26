@@ -39,10 +39,11 @@ class BottomNavBar extends StatelessWidget {
         ),
         BottomNavigationBarItem(
           icon: Icon(
-            Icons.menu,
+            // Icons.business_rounded,
+            Icons.account_circle_rounded,
             size: selectedIndex == 3 ? 30 : 24,
           ),
-          label: 'Menu',
+          label: 'Info',
         ),
       ],
       currentIndex: selectedIndex,

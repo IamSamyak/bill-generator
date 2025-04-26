@@ -90,6 +90,30 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
+  // New method to get AppBar title based on current page
+  String _getAppBarTitle() {
+    switch (_currentPage) {
+      case 'CreateBill':
+        return 'Create Bill';
+      case 'History-Paid':
+        return 'Payment History';
+      case 'History-Unpaid':
+        return 'Unpaid Bills';
+      case 'Reports':
+        return 'Reports';
+      case 'EditDetails':
+        return 'Edit Company Details';
+      case 'Share-Media':
+        return 'Share Media';
+      case 'UpdateBills':
+        return 'Update Bills';
+      case 'UpdateCategories':
+        return 'Manage Categories';
+      default:
+        return 'Bill Generator'; // Default title
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     Widget bodyWidget;
@@ -98,17 +122,17 @@ class _MainScreenState extends State<MainScreen> {
         bodyWidget = CreateBillPage(onBack: () => _navigateToPage('Home'));
         break;
       case 'History-Paid':
-        bodyWidget = HistoryPage(payStatusParam:"Paid");
+        bodyWidget = HistoryPage(payStatusParam: "Paid");
         break;
       case 'History-Unpaid':
         Navigator.pop(context);
-        bodyWidget = HistoryPage(payStatusParam:"Unpaid");
+        bodyWidget = HistoryPage(payStatusParam: "Unpaid");
         break;
       case 'Reports':
         bodyWidget = ReportsPage();
         break;
       case 'EditDetails':
-        bodyWidget = MenuScreen();
+        bodyWidget = CompanyProfilePage();
         break;
       case 'Share-Media':
         bodyWidget = ShareImagesPage();
@@ -127,7 +151,7 @@ class _MainScreenState extends State<MainScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Bill Generator'),
+        title: Text(_getAppBarTitle()),
         centerTitle: true,
         leading: Builder(
           builder: (context) {
@@ -147,13 +171,12 @@ class _MainScreenState extends State<MainScreen> {
       ),
       drawer: AppDrawer(onNavigate: _navigateToPage),
       body: bodyWidget,
-      bottomNavigationBar:
-          (_currentPage != 'CreateBill')
-              ? BottomNavBar(
-                selectedIndex: _selectedIndex,
-                onItemTapped: _onNavItemTapped,
-              )
-              : null,
+      bottomNavigationBar: (_currentPage != 'CreateBill')
+          ? BottomNavBar(
+              selectedIndex: _selectedIndex,
+              onItemTapped: _onNavItemTapped,
+            )
+          : null,
     );
   }
 }

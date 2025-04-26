@@ -223,7 +223,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF184373),
+                color: Color(0xFF374151),
               ),
             ),
             const SizedBox(height: 10),
