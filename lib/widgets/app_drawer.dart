@@ -44,6 +44,11 @@ class AppDrawer extends StatelessWidget {
             title: const Text('Pending Bills'),
             onTap: () => onNavigate('History-Unpaid'),
           ),
+          ListTile(
+            leading: const Icon(Icons.date_range),
+            title: const Text('RangeSelector'),
+            onTap: () => onNavigate('RangeSelector'),
+          ),
           const Divider(),
           ListTile(
             leading: const Icon(Icons.home),

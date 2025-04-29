@@ -1,6 +1,7 @@
 import 'package:bill_generator/pages/AddCategoriesPage.dart';
 import 'package:bill_generator/pages/UpdateBill.dart';
 import 'package:bill_generator/pages/menu_screen_page.dart';
+import 'package:bill_generator/pages/range_dashboard_page.dart';
 import 'package:bill_generator/pages/reports_page.dart';
 import 'package:bill_generator/pages/share_images_page.dart';
 import 'package:flutter/material.dart';
@@ -140,6 +141,10 @@ class _MainScreenState extends State<MainScreen> {
       case 'UpdateBills':
         Navigator.pop(context);
         bodyWidget = UpdateBillsPage();
+        break;
+      case 'RangeSelector':
+        Navigator.pop(context);
+        bodyWidget = RevenueDateRangeSelector();
         break;
       case 'UpdateCategories':
         Navigator.pop(context);
