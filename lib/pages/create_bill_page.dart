@@ -173,7 +173,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
 
     try {
       await WhatsappShare.shareFile(
-        phone: '919881102237',
+        phone: '918888308015',
         filePath: [generatedPdf!.path],
       );
     } catch (e) {

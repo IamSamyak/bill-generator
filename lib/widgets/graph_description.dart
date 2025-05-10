@@ -8,12 +8,14 @@ class GraphDescription extends StatelessWidget {
 
   final double totalRevenue;
 
+  static const Color customTextColor = Color(0xFF374151); // Custom font color
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(12.0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch, // Makes children take full width
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _simpleCard(
             title: "Total Revenue",
@@ -47,7 +49,7 @@ class GraphDescription extends StatelessWidget {
     required String value,
   }) {
     return Card(
-      elevation: 1, // Low shadow
+      elevation: 1,
       color: Colors.white,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
@@ -55,11 +57,23 @@ class GraphDescription extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: customTextColor, // Apply custom color
+              ),
+            ),
             const SizedBox(height: 8),
-            Text(value,
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: customTextColor, // Apply custom color
+              ),
+            ),
           ],
         ),
       ),

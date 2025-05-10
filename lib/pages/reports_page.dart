@@ -12,7 +12,8 @@ class ReportsPage extends StatefulWidget {
 }
 
 class _ReportsPageState extends State<ReportsPage> {
-  final BillService billService = BillService(); // Create an instance of BillService
+  final BillService billService =
+      BillService(); // Create an instance of BillService
   bool _isLoading = true;
   String? _error;
   List<Map<String, dynamic>> _bills = [];
@@ -26,7 +27,8 @@ class _ReportsPageState extends State<ReportsPage> {
 
   Future<void> _fetchBills() async {
     try {
-      final bills = await billService.fetchBills(); // Use BillService to fetch bills
+      final bills =
+          await billService.fetchBills(); // Use BillService to fetch bills
       setState(() {
         _bills = bills;
         _isLoading = false;
@@ -77,30 +79,10 @@ class _ReportsPageState extends State<ReportsPage> {
                   "Revenue",
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
-                DropdownButton<String>(
-                  value: selectedChartType,
-                  onChanged: (value) {
-                    setState(() {
-                      selectedChartType = value!;
-                    });
-                  },
-                  items: const [
-                    DropdownMenuItem(
-                      value: "Bar Chart",
-                      child: Text("Bar Chart"),
-                    ),
-                    DropdownMenuItem(
-                      value: "Line Chart",
-                      child: Text("Line Chart"),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
-          selectedChartType == "Bar Chart"
-              ? BarChartWidget(monthlyRevenue: monthlyRevenue)
-              : LineChartWidget(monthlyRevenue: monthlyRevenue),
+          BarChartWidget(monthlyRevenue: monthlyRevenue),
           GraphDescription(
             totalRevenue: totalRevenue,
             // Add other variables here as needed

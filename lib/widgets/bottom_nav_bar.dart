@@ -13,6 +13,7 @@ class BottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const Color kMainColor = Color(0xFF1A66BE);
+    const Color customTextColor = Color(0xFF374151); // Font color for unselected items
 
     return BottomNavigationBar(
       items: [
@@ -39,7 +40,6 @@ class BottomNavBar extends StatelessWidget {
         ),
         BottomNavigationBarItem(
           icon: Icon(
-            // Icons.business_rounded,
             Icons.account_circle_rounded,
             size: selectedIndex == 3 ? 30 : 24,
           ),
@@ -48,12 +48,16 @@ class BottomNavBar extends StatelessWidget {
       ],
       currentIndex: selectedIndex,
       selectedItemColor: kMainColor,
-      unselectedItemColor: Colors.grey,
+      unselectedItemColor: customTextColor, // Apply the font color here
       selectedLabelStyle: const TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.bold,
       ),
-      unselectedLabelStyle: const TextStyle(fontSize: 12),
+      unselectedLabelStyle: const TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+        color: customTextColor, // Flutter will ignore this for BottomNavigationBar
+      ),
       onTap: onItemTapped,
     );
   }

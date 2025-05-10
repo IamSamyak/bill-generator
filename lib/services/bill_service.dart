@@ -1,16 +1,17 @@
 import 'dart:convert';
-import 'dart:ui';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
-import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:intl/intl.dart';
+import 'company_profile_service.dart';
 
 class BillService {
   final String projectId = dotenv.env['PROJECT_ID'] ?? '';
   final String apiKey = dotenv.env['FIREBASE_API_KEY'] ?? '';
+  final CompanyProfileService _service = CompanyProfileService();
 
   Future<List<Map<String, dynamic>>> fetchBills({
     String payStatusFilter = 'All',
@@ -152,202 +153,39 @@ class BillService {
     }
   }
 
-// Future<File?> generatePdfAndSave(Map<String, dynamic> billData) async {
-//   final PdfDocument document = PdfDocument();
-//   final DateTime now = DateTime.now();
-//   final String billDate =
-//       "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
-
-//   // Create a page with reduced width (80mm width ~ 226.77 points)
-//   final PdfPage page = document.pages.add();
-//   final PdfGraphics graphics = page.graphics;
-//   final Size pageSize = Size(220, 350);  // Reduced width and adjusted height
-//   // page.graphics. = pageSize;
-
-//   // Define fonts
-//   final PdfFont titleFont = PdfStandardFont(
-//     PdfFontFamily.helvetica,
-//     16,
-//     style: PdfFontStyle.bold,
-//   );
-//   final PdfFont normalFont = PdfStandardFont(PdfFontFamily.helvetica, 8);
-//   final PdfFont boldFont = PdfStandardFont(
-//     PdfFontFamily.helvetica,
-//     9,
-//     style: PdfFontStyle.bold,
-//   );
-
-//   double y = 0;
-
-//   // Header - Centered (Updated for bold and centered address)
-//   final Size textSize = titleFont.measureString("AKASH MEN'S WEAR");
-//   final double centerX = (pageSize.width - textSize.width) / 2;
-//   graphics.drawString(
-//     "AKASH MEN'S WEAR",
-//     titleFont,
-//     bounds: Rect.fromLTWH(centerX, y, pageSize.width, 20),
-//   );
-//   y += 25;
-
-//   // Updated to make address bold and centered
-//   final PdfFont centerBoldFont = PdfStandardFont(PdfFontFamily.helvetica, 8, style: PdfFontStyle.bold);
-//   final Size addressSize = centerBoldFont.measureString("123 Main Road, Kolkata - 700001\nPhone: +91-9876543210");
-//   final double addressX = (pageSize.width - addressSize.width) / 2;
-//   graphics.drawString(
-//     "123 Main Road, Kolkata - 700001\nPhone: +91-9876543210",
-//     centerBoldFont,
-//     bounds: Rect.fromLTWH(addressX, y, pageSize.width, 30),
-//   );
-//   y += 35;
-
-//   // Receipt Title - Centered (Bold)
-//   final Size receiptTitleSize = boldFont.measureString("RECEIPT");
-//   final double receiptCenterX = (pageSize.width - receiptTitleSize.width) / 2;
-//   graphics.drawString(
-//     "RECEIPT",
-//     boldFont,
-//     bounds: Rect.fromLTWH(receiptCenterX, y, pageSize.width, 15),
-//   );
-//   y += 20;
-
-//   // Receipt Details
-//   graphics.drawString(
-//     "Receipt No: #1001",
-//     normalFont,
-//     bounds: Rect.fromLTWH(0, y, 100, 15),
-//   );
-//   graphics.drawString(
-//     billDate,
-//     normalFont,
-//     bounds: Rect.fromLTWH(120, y, 100, 15),
-//   );
-//   y += 20;
-
-//   // Create Grid with Item, Qty, Price
-//   final PdfGrid grid = PdfGrid();
-//   grid.columns.add(count: 3);
-//   grid.headers.add(1);
-
-//   grid.headers[0].cells[0].value = "Item";
-//   grid.headers[0].cells[1].value = "Qty";
-//   grid.headers[0].cells[2].value = "Price";
-//   grid.headers[0].style.font = boldFont;
-
-//   // Add purchase data
-//   for (var item in billData["purchaseList"]) {
-//     final PdfGridRow row = grid.rows.add();
-//     row.cells[0].value = item["productCategory"].toString();
-//     row.cells[1].value = item["quantity"].toString();
-//     row.cells[2].value = item["price"].toString();
-
-//     // Remove horizontal lines for individual items
-//     for (int i = 0; i < grid.columns.count; i++) {
-//       row.cells[i].style.borders.bottom = PdfPens.transparent;
-//     }
-//   }
-
-//   // Totals (no horizontal lines between subtotal, discount, and total)
-//   final PdfGridRow subtotalRow = grid.rows.add();
-//   subtotalRow.cells[0].value = "Subtotal";
-//   subtotalRow.cells[1].value = "";
-//   subtotalRow.cells[2].value = billData["totalAmount"].toString();
-
-//   final PdfGridRow discountRow = grid.rows.add();
-//   discountRow.cells[0].value = "Discount";
-//   discountRow.cells[1].value = "";
-//   discountRow.cells[2].value = billData["discount"].toString();
-
-//   final PdfGridRow totalRow = grid.rows.add();
-//   totalRow.cells[0].value = "Total";
-//   totalRow.cells[1].value = "";
-//   totalRow.cells[2].value = billData["netAmount"].toString();
-//   totalRow.style.font = boldFont;
-
-//   // Apply padding and font
-//   grid.style.font = normalFont;
-//   grid.style.cellPadding = PdfPaddings(left: 2, right: 2, top: 2, bottom: 2);
-
-//   // Remove vertical borders
-//   for (int i = 0; i < grid.columns.count; i++) {
-//     final List<PdfGridRow> allRows = [grid.headers[0]];
-//     for (int j = 0; j < grid.rows.count; j++) {
-//       allRows.add(grid.rows[j]);
-//     }
-//     for (PdfGridRow row in allRows) {
-//       row.cells[i].style.borders.left = PdfPens.transparent;
-//       row.cells[i].style.borders.right = PdfPens.transparent;
-//     }
-//   }
-
-//   // Remove horizontal lines for totals
-//   for (int i = 0; i < grid.rows.count; i++) {
-//     final PdfGridRow row = grid.rows[i];
-//     if (i == grid.rows.count - 1 || i == grid.rows.count - 2 || i == grid.rows.count - 3) {
-//       // Do not remove horizontal lines for subtotal, discount, and total
-//       continue;
-//     }
-//     for (int j = 0; j < grid.columns.count; j++) {
-//       row.cells[j].style.borders.bottom = PdfPens.transparent;
-//     }
-//   }
-
-//   // Draw grid
-//   grid.draw(
-//     page: page,
-//     bounds: Rect.fromLTWH(0, y, pageSize.width, pageSize.height - y - 20),  // Reduced bottom spacing
-//   );
-
-//   final Size footerSize = boldFont.measureString("THANK YOU FOR SHOPPING!");
-//   final double footerCenterX = (pageSize.width - footerSize.width) / 2;
-//   graphics.drawString(
-//     "THANK YOU FOR SHOPPING!",
-//     boldFont,
-//     bounds: Rect.fromLTWH(footerCenterX, pageSize.height - 20, pageSize.width, 15),
-//   );
-
-//   // Save and return
-//   try {
-//     final dir = await getExternalStorageDirectory();
-//     if (dir == null) return null;
-
-//     final filePath =
-//         '${dir.path}/bill_${DateTime.now().millisecondsSinceEpoch}.pdf';
-//     final file = File(filePath);
-
-//     await file.writeAsBytes(await document.save());
-//     document.dispose();
-//     return file;
-//   } catch (e) {
-//     print("❌ Error saving PDF: $e");
-//     return null;
-//   }
-// }
 Future<File?> generatePdfAndSave(Map<String, dynamic> billData) async {
   final pdf = pw.Document();
 
   final DateTime now = DateTime.now();
   final String billDate = "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
-  final String billTime = "08:17 PM";
+  final String billTime = DateFormat('hh:mm a').format(now); 
+
+  final shopDetails = await _service.fetchShopDetails();
+  print('shopdetails are $shopDetails');
+  final String shopName = shopDetails?['shopName'] ?? "Shop Name";
+  final String shopAddress = shopDetails?['address'] ?? "Address";
+  final String shopMobile = shopDetails?['mobileNumber'] ?? "Phone";
 
   pdf.addPage(
     pw.Page(
-      pageFormat: PdfPageFormat(68 * PdfPageFormat.mm, 150 * PdfPageFormat.mm),
+      pageFormat: PdfPageFormat(68 * PdfPageFormat.mm, 90 * PdfPageFormat.mm),
       build: (pw.Context context) {
         return pw.Padding(
           padding: pw.EdgeInsets.symmetric(horizontal: 5),
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
+              pw.SizedBox(height: 10),
               pw.Center(
                 child: pw.Text(
-                  "AKASH MEN'S WEAR",
+                  shopName,
                   style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
                 ),
               ),
               pw.SizedBox(height: 4),
               pw.Center(
                 child: pw.Text(
-                  "123 Main Road, Kolkata - 700001\nPhone: +91-9876543210",
+                  "$shopAddress\nPhone: $shopMobile",
                   textAlign: pw.TextAlign.center,
                   style: pw.TextStyle(fontSize: 8),
                 ),
@@ -377,8 +215,8 @@ Future<File?> generatePdfAndSave(Map<String, dynamic> billData) async {
               // ==== Table Header ====
               pw.Table(
                 border: pw.TableBorder(
-                  top: pw.BorderSide(width: 0.5, color: PdfColors.grey700),
-                  bottom: pw.BorderSide(width: 0.5, color: PdfColors.grey700),
+                  top: pw.BorderSide(width: 1, color: PdfColors.black),
+                  bottom: pw.BorderSide(width: 1, color: PdfColors.black),
                 ),
                 columnWidths: {
                   0: pw.FlexColumnWidth(2),
@@ -391,19 +229,19 @@ Future<File?> generatePdfAndSave(Map<String, dynamic> billData) async {
                     children: [
                       pw.Padding(
                         padding: pw.EdgeInsets.all(4),
-                        child: pw.Text('Description', style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold)),
+                        child: pw.Text('DESCRIPTION', style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold)),
                       ),
                       pw.Padding(
                         padding: pw.EdgeInsets.all(4),
-                        child: pw.Text('Qty', style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center),
+                        child: pw.Text('QTY', style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center),
                       ),
                       pw.Padding(
                         padding: pw.EdgeInsets.all(4),
-                        child: pw.Text('Price', style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.right),
+                        child: pw.Text('PRICE', style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.right),
                       ),
                       pw.Padding(
                         padding: pw.EdgeInsets.all(4),
-                        child: pw.Text('Total', style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.right),
+                        child: pw.Text('TOTAL', style: pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.right),
                       ),
                     ],
                   ),
@@ -436,7 +274,7 @@ Future<File?> generatePdfAndSave(Map<String, dynamic> billData) async {
                         ),
                         pw.Padding(
                           padding: pw.EdgeInsets.all(4),
-                          child: pw.Text(item["totalPrice"].toString(), style: pw.TextStyle(fontSize: 8), textAlign: pw.TextAlign.right),
+                          child: pw.Text((item["price"]*item["quantity"]).toString(), style: pw.TextStyle(fontSize: 8), textAlign: pw.TextAlign.right),
                         ),
                       ],
                     );
@@ -449,7 +287,7 @@ Future<File?> generatePdfAndSave(Map<String, dynamic> billData) async {
               // ==== Summary Table ====
               pw.Table(
                 border: pw.TableBorder(
-                  top: pw.BorderSide(width: 0.5, color: PdfColors.grey700),
+                  top: pw.BorderSide(width: 1, color: PdfColors.black),
                 ),
                 columnWidths: {
                   0: pw.FlexColumnWidth(2),
@@ -486,8 +324,8 @@ Future<File?> generatePdfAndSave(Map<String, dynamic> billData) async {
               // ==== Total Row with Top & Bottom Border ====
               pw.Table(
                 border: pw.TableBorder(
-                  top: pw.BorderSide(width: 0.5, color: PdfColors.grey700),
-                  bottom: pw.BorderSide(width: 0.5, color: PdfColors.grey700),
+                  top: pw.BorderSide(width: 1, color: PdfColors.black),
+                  bottom: pw.BorderSide(width: 1, color: PdfColors.black),
                 ),
                 columnWidths: {
                   0: pw.FlexColumnWidth(2),
@@ -535,6 +373,4 @@ Future<File?> generatePdfAndSave(Map<String, dynamic> billData) async {
     return null;
   }
 }
-
-
 }
