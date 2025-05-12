@@ -1,118 +1,196 @@
 import 'package:flutter/material.dart';
+import '../services/bill_service.dart'; // Import the service where searchBillsByCustomerName is defined
 
-class UpdateBillsPage extends StatefulWidget {
-  const UpdateBillsPage({super.key});
+// Define the main color as a constant
+const Color kMainColor = Color(0xFF1864BF);
+
+class SearchBillPage extends StatefulWidget {
+  final Function(String) onNavigate;
+
+  const SearchBillPage({super.key, required this.onNavigate});
 
   @override
-  State<UpdateBillsPage> createState() => _UpdateBillsPageState();
+  _SearchBillPageState createState() => _SearchBillPageState();
 }
 
-class _UpdateBillsPageState extends State<UpdateBillsPage> {
-  final TextEditingController _searchController = TextEditingController();
+class _SearchBillPageState extends State<SearchBillPage> {
+  TextEditingController receiptIdController = TextEditingController();
+  TextEditingController customerNameController = TextEditingController();
+  List<Map<String, dynamic>> bills = [];
+  String warningMessage = '';
+  final BillService _billService = BillService();
 
-  List<Map<String, dynamic>> allBills = [
-    {
-      'customerName': 'Alice Johnson',
-      'mobile': '1234567890',
-      'amount': '500',
-      'status': 'Unpaid',
-    },
-    {
-      'customerName': 'Bob Smith',
-      'mobile': '9876543210',
-      'amount': '750',
-      'status': 'Paid',
-    },
-    {
-      'customerName': 'Charlie Adams',
-      'mobile': '1122334455',
-      'amount': '300',
-      'status': 'Pending',
-    },
-  ];
+  // Function to handle search logic
+  void _searchBills() async {
+    String receiptId = receiptIdController.text.trim();
+    String customerName = customerNameController.text.trim();
 
-  List<Map<String, dynamic>> filteredBills = [];
+    // If both receiptId and customerName are entered, show warning
+    if (receiptId.isNotEmpty && customerName.isNotEmpty) {
+      setState(() {
+        warningMessage = "Please choose only one: either Receipt ID or Customer Name.";
+      });
+      return;
+    } else {
+      setState(() {
+        warningMessage = ''; // Clear any previous warning message
+      });
+    }
 
-  @override
-  void initState() {
-    super.initState();
-    filteredBills = allBills;
-  }
-
-  void _filterBills(String query) {
-    setState(() {
-      filteredBills = allBills.where((bill) {
-        final name = bill['customerName'].toString().toLowerCase();
-        final mobile = bill['mobile'].toString();
-        return name.contains(query.toLowerCase()) || mobile.contains(query);
-      }).toList();
-    });
-  }
-
-  void _updateBill(int index, String field, String value) {
-    setState(() {
-      filteredBills[index][field] = value;
-    });
+    // Call the service to search bills by customer name
+    if (customerName.isNotEmpty) {
+      try {
+        final results = await _billService.searchBillsByCustomerName(customerName: customerName);
+        setState(() {
+          bills = results;
+        });
+      } catch (e) {
+        // Handle error gracefully (show error message if needed)
+        setState(() {
+          warningMessage = 'Failed to fetch bills: ${e.toString()}';
+        });
+      }
+    } else {
+      // Handle the case where Receipt ID is provided (implement as needed)
+      // For example, you could add logic to search by Receipt ID as well.
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              hintText: 'Search by name or mobile',
-              prefixIcon: const Icon(Icons.search),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-            onChanged: _filterBills,
-          ),
-        ),
-        Expanded(
-          child: ListView.builder(
-            itemCount: filteredBills.length,
-            itemBuilder: (context, index) {
-              final bill = filteredBills[index];
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Customer: ${bill['customerName']}'),
-                      Text('Mobile: ${bill['mobile']}'),
-                      const SizedBox(height: 8),
-                      TextField(
-                        decoration: const InputDecoration(labelText: 'Bill Amount'),
-                        keyboardType: TextInputType.number,
-                        controller: TextEditingController(text: bill['amount']),
-                        onChanged: (val) => _updateBill(index, 'amount', val),
-                      ),
-                      DropdownButtonFormField<String>(
-                        value: bill['status'],
-                        items: ['Paid', 'Unpaid', 'Pending']
-                            .map((status) => DropdownMenuItem(
-                                  value: status,
-                                  child: Text(status),
-                                ))
-                            .toList(),
-                        onChanged: (val) {
-                          if (val != null) _updateBill(index, 'status', val);
-                        },
-                        decoration: const InputDecoration(labelText: 'Pay Status'),
-                      ),
-                    ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 16),
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Receipt ID input with padding and space adjustments
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: TextField(
+                  controller: receiptIdController,
+                  style: const TextStyle(fontSize: 14),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    labelText: 'Receipt ID',
+                    labelStyle: const TextStyle(fontSize: 14),
+                    prefixIcon: Icon(Icons.search, size: 18, color: Colors.grey[700]),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
-              );
-            },
+              ),
+              const SizedBox(height: 12),
+
+              // Customer Name input with padding and space adjustments
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: TextField(
+                  controller: customerNameController,
+                  style: const TextStyle(fontSize: 14),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    labelText: 'Customer Name',
+                    labelStyle: const TextStyle(fontSize: 14),
+                    prefixIcon: Icon(Icons.person, size: 18, color: Colors.grey[700]),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Show warning message if both fields are filled
+              if (warningMessage.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    warningMessage,
+                    style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+
+              // Centered image and slightly shifted to the right
+              if (bills.isEmpty) ...[
+                Center(
+                  child: Transform.translate(
+                    offset: const Offset(8, 0), // Shift 8 pixels right
+                    child: Image.asset(
+                      'assets/SearchBill.png',
+                      height: 240,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+                const Text(
+                  "No Bills Yet",
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF184373),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  "Search for a bill by receipt ID or customer name",
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Colors.black54,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+
+              // Display the list of bills
+              if (bills.isNotEmpty) ...[
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: NeverScrollableScrollPhysics(),
+                  itemCount: bills.length,
+                  itemBuilder: (context, index) {
+                    final bill = bills[index];
+                    return ListTile(
+                      title: Text(bill['customerName']),
+                      subtitle: Text('Amount: ${bill['amount']}'),
+                      trailing: Text(bill['date']),
+                    );
+                  },
+                ),
+              ],
+
+              const SizedBox(height: 16),
+
+              ElevatedButton(
+                onPressed: _searchBills,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kMainColor,
+                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                child: const Text(
+                  "Search Bill",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 }

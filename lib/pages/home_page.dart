@@ -11,19 +11,20 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0,vertical: 24), // Removed vertical padding
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 24), // Existing padding
       child: Align(
         alignment: Alignment.topCenter, // Align horizontally centered at top
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center, // Horizontal centering
           children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 10.0),
-              child: Transform.scale(
-                scale: 0.8,
+            const SizedBox(height: 70),  // <-- Added 30px space above the image
+            Center(
+              child: Transform.translate(
+                offset: const Offset(4, 0), // Shift 4 pixels right
                 child: Image.asset(
                   'assets/temp.png',
+                  height: 240,
                   fit: BoxFit.contain,
                 ),
               ),
@@ -38,9 +39,9 @@ class HomePage extends StatelessWidget {
             ),
             const SizedBox(height: 5),
             const Text(
-              "Generate bill for your customer",
+              "Generate a bill for your customer",
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 15,
                 color: Colors.black54,
               ),
               textAlign: TextAlign.center,
@@ -56,7 +57,7 @@ class HomePage extends StatelessWidget {
                 ),
               ),
               child: const Text(
-                "Generate Bill",
+                "CREATE BILL",
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,

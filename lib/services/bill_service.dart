@@ -104,6 +104,101 @@ class BillService {
     }
   }
 
+Future<List<Map<String, dynamic>>> searchBillsByCustomerName({
+  required String customerName,
+}) async {
+  final String filterUrl =
+      'https://firestore.googleapis.com/v1/projects/$projectId/databases/(default)/documents:runQuery?key=$apiKey';
+  
+  // Build the query filter for customerName
+  List<Map<String, dynamic>> filters = [];
+
+  if (customerName.isNotEmpty) {
+    filters.add({
+      'fieldFilter': {
+        'field': {'fieldPath': 'customerName'},
+        'op': 'EQUAL',
+        'value': {'stringValue': customerName},
+      }
+    });
+  }
+
+  final body = jsonEncode({
+    'structuredQuery': {
+      'from': [
+        {'collectionId': 'bills'}
+      ],
+      'where': {
+        'and': filters, // Applying the filter on customerName
+      },
+    }
+  });
+
+  final response = await http.post(
+    Uri.parse(filterUrl),
+    headers: {'Content-Type': 'application/json'},
+    body: body,
+  );
+
+  // Check the response status and print the body for debugging
+  if (response.statusCode == 200) {
+    print("Response body: ${response.body}");
+
+    final decoded = jsonDecode(response.body);
+    final List<Map<String, dynamic>> bills = [];
+
+    // Loop through the decoded response
+    for (var doc in decoded) {
+      // Firestore response will have the document data under 'document' key
+      final document = doc['document'];
+      if (document != null) {
+        final fields = document['fields'];
+
+        var purchaseList = (fields['purchaseList']?['arrayValue']?['values'] ?? [])
+            .map<Map<String, dynamic>>((item) {
+          var productCategory = item['mapValue']['fields']['productCategory']?['stringValue'] ?? '';
+          var productName = item['mapValue']['fields']['productName']?['stringValue'] ?? '';
+          var price = double.tryParse(item['mapValue']['fields']?['price']?['doubleValue']?.toString() ?? '0') ?? 0.0;
+          var quantity = int.tryParse(item['mapValue']['fields']?['quantity']?['integerValue'] ?? '0') ?? 0;
+          var total = double.tryParse(item['mapValue']['fields']?['total']?['doubleValue']?.toString() ?? '0') ?? 0.0;
+
+          return {
+            'productCategory': productCategory,
+            'productName': productName,
+            'price': price,
+            'quantity': quantity,
+            'total': total,
+          };
+        }).toList();
+
+        final rawDate = fields['billDate']?['stringValue'];
+        String formattedDate = '';
+        if (rawDate != null) {
+          final parsedDate = DateTime.tryParse(rawDate);
+          if (parsedDate != null) {
+            formattedDate =
+                '${parsedDate.year.toString().padLeft(4, '0')}-${parsedDate.month.toString().padLeft(2, '0')}-${parsedDate.day.toString().padLeft(2, '0')}';
+          }
+        }
+
+        bills.add({
+          'customerName': fields['customerName']?['stringValue'] ?? '',
+          'mobileNumber': fields['mobileNumber']?['stringValue'] ?? '',
+          'date': formattedDate,
+          'paymentMethod': fields['paymentMethod']?['stringValue'] ?? '',
+          'amount': double.tryParse(fields['totalAmount']?['doubleValue']?.toString() ?? '0') ?? 0.0,
+          'purchaseList': purchaseList,
+        });
+      }
+    }
+
+    return bills;
+  } else {
+    print("Error: ${response.statusCode}, ${response.body}");
+    throw Exception('Failed to fetch bills: ${response.body}');
+  }
+}
+
   Future<bool> uploadBillToFirebase(Map<String, dynamic> billData) async {
     try {
       final Uri url = Uri.parse(

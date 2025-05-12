@@ -140,11 +140,11 @@ class _MainScreenState extends State<MainScreen> {
         break;
       case 'UpdateBills':
         Navigator.pop(context);
-        bodyWidget = UpdateBillsPage();
+        bodyWidget = SearchBillPage(onNavigate: _navigateToPage);
         break;
       case 'RangeSelector':
         Navigator.pop(context);
-        bodyWidget = RevenueDateRangeSelector();
+        bodyWidget = DateRangeSelectionWidget();
         break;
       case 'UpdateCategories':
         Navigator.pop(context);
@@ -174,7 +174,10 @@ class _MainScreenState extends State<MainScreen> {
           },
         ),
       ),
-      drawer: AppDrawer(onNavigate: _navigateToPage),
+       drawer: SizedBox(
+        width: 250, // Adjust the width here as per your preference
+        child: AppDrawer(onNavigate: _navigateToPage),
+      ),
       body: bodyWidget,
       bottomNavigationBar: (_currentPage != 'CreateBill')
           ? BottomNavBar(
