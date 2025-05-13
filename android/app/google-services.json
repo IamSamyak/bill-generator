@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1030194076041",
+    "project_id": "bill-generator-c4df3",
+    "storage_bucket": "bill-generator-c4df3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1030194076041:android:b2f913b6826dbfd0086958",
+        "android_client_info": {
+          "package_name": "com.example.bill_generator"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCwwGiTx4Uwf7JHZ1k5PDuXy5jpzpdQfoc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

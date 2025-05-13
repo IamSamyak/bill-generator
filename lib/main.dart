@@ -4,6 +4,7 @@ import 'package:bill_generator/pages/menu_screen_page.dart';
 import 'package:bill_generator/pages/range_dashboard_page.dart';
 import 'package:bill_generator/pages/reports_page.dart';
 import 'package:bill_generator/pages/share_images_page.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:bill_generator/pages/home_page.dart';
 import 'package:bill_generator/pages/create_bill_page.dart';
@@ -16,6 +17,8 @@ import 'package:bill_generator/widgets/app_drawer.dart'; // Import the new widge
 const Color kMainColor = Color(0xFF1A66BE);
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
   await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
