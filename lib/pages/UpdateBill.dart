@@ -51,8 +51,17 @@ class _SearchBillPageState extends State<SearchBillPage> {
         });
       }
     } else {
-      // Handle the case where Receipt ID is provided (implement as needed)
-      // For example, you could add logic to search by Receipt ID as well.
+       try {
+        final results = await _billService.searchBillsByReceiptId(receiptId: '#$receiptId');
+        setState(() {
+          bills = results;
+        });
+      } catch (e) {
+        // Handle error gracefully (show error message if needed)
+        setState(() {
+          warningMessage = 'Failed to fetch bills: ${e.toString()}';
+        });
+      }
     }
   }
 

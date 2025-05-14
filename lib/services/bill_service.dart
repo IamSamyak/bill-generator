@@ -16,56 +16,108 @@ class BillService {
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-Future<List<Map<String, dynamic>>> fetchBills({
-  String payStatusFilter = 'All',
+  Future<List<Map<String, dynamic>>> fetchBills({
+    String payStatusFilter = 'All',
+  }) async {
+    try {
+      // Query Firestore and order by 'billDate' in descending order
+      QuerySnapshot querySnapshot =
+          await _firestore
+              .collection('bills')
+              .orderBy('billDate', descending: true)
+              .get();
+
+      List<Map<String, dynamic>> bills = [];
+
+      for (var doc in querySnapshot.docs) {
+        var data = doc.data() as Map<String, dynamic>;
+
+        var purchaseList =
+            (data['purchaseList'] ?? []).map<Map<String, dynamic>>((item) {
+              return {
+                'productCategory': item['productCategory'] ?? '',
+                'productName': item['productName'] ?? '',
+                'price': item['price'] ?? 0.0,
+                'quantity': item['quantity'] ?? 0,
+                'total': item['total'] ?? 0.0,
+              };
+            }).toList();
+
+        String formattedDate = '';
+        if (data['billDate'] != null) {
+          DateTime parsedDate =
+              DateTime.tryParse(data['billDate']) ?? DateTime.now();
+          formattedDate =
+              '${parsedDate.year}-${parsedDate.month}-${parsedDate.day}';
+        }
+
+        if (payStatusFilter == 'All' || data['payStatus'] == payStatusFilter) {
+          bills.add({
+            'customerName': data['customerName'] ?? '',
+            'mobileNumber': data['mobileNumber'] ?? '',
+            'date': formattedDate,
+            'payStatus': data['payStatus'] ?? '',
+            'paymentMethod': data['paymentMethod'] ?? '',
+            'amount': data['totalAmount'] ?? 0.0,
+            'purchaseList': purchaseList,
+          });
+        }
+      }
+
+      return bills;
+    } catch (e) {
+      throw Exception('Failed to fetch bills: $e');
+    }
+  }
+
+ Future<List<Map<String, dynamic>>> searchBillsByReceiptId({
+  required String receiptId,
 }) async {
   try {
-    // Query Firestore and order by 'billDate' in descending order
-    QuerySnapshot querySnapshot = await _firestore
+    DocumentSnapshot docSnapshot = await _firestore
         .collection('bills')
-        .orderBy('billDate', descending: true)
+        .doc(receiptId)
         .get();
 
-    List<Map<String, dynamic>> bills = [];
-
-    for (var doc in querySnapshot.docs) {
-      var data = doc.data() as Map<String, dynamic>;
-
-      var purchaseList = (data['purchaseList'] ?? []).map<Map<String, dynamic>>((item) {
-        return {
-          'productCategory': item['productCategory'] ?? '',
-          'productName': item['productName'] ?? '',
-          'price': item['price'] ?? 0.0,
-          'quantity': item['quantity'] ?? 0,
-          'total': item['total'] ?? 0.0,
-        };
-      }).toList();
-
-      String formattedDate = '';
-      if (data['billDate'] != null) {
-        DateTime parsedDate = DateTime.tryParse(data['billDate']) ?? DateTime.now();
-        formattedDate = '${parsedDate.year}-${parsedDate.month}-${parsedDate.day}';
-      }
-
-      if (payStatusFilter == 'All' || data['payStatus'] == payStatusFilter) {
-        bills.add({
-          'customerName': data['customerName'] ?? '',
-          'mobileNumber': data['mobileNumber'] ?? '',
-          'date': formattedDate,
-          'payStatus': data['payStatus'] ?? '',
-          'paymentMethod': data['paymentMethod'] ?? '',
-          'amount': data['totalAmount'] ?? 0.0,
-          'purchaseList': purchaseList,
-        });
-      }
+    if (!docSnapshot.exists) {
+      return []; // Return empty list if no matching document
     }
 
-    return bills;
+    var data = docSnapshot.data() as Map<String, dynamic>;
+
+    var purchaseList =
+        (data['purchaseList'] ?? []).map<Map<String, dynamic>>((item) {
+          return {
+            'productCategory': item['productCategory'] ?? '',
+            'productName': item['productName'] ?? '',
+            'price': item['price'] ?? 0.0,
+            'quantity': item['quantity'] ?? 0,
+            'total': item['total'] ?? 0.0,
+          };
+        }).toList();
+
+    String formattedDate = '';
+    if (data['billDate'] != null) {
+      DateTime parsedDate =
+          DateTime.tryParse(data['billDate']) ?? DateTime.now();
+      formattedDate =
+          '${parsedDate.year}-${parsedDate.month}-${parsedDate.day}';
+    }
+
+    return [
+      {
+        'customerName': data['customerName'] ?? '',
+        'mobileNumber': data['mobileNumber'] ?? '',
+        'date': formattedDate,
+        'paymentMethod': data['paymentMethod'] ?? '',
+        'amount': data['totalAmount'] ?? 0.0,
+        'purchaseList': purchaseList,
+      }
+    ];
   } catch (e) {
-    throw Exception('Failed to fetch bills: $e');
+    throw Exception('Failed to fetch bill by receiptId: $e');
   }
 }
-
 
   Future<List<Map<String, dynamic>>> searchBillsByCustomerName({
     required String customerName,
@@ -117,9 +169,47 @@ Future<List<Map<String, dynamic>>> fetchBills({
     }
   }
 
-  Future<bool> uploadBillToFirebase(Map<String, dynamic> billData) async {
+  // Future<bool> uploadBillToFirebase(Map<String, dynamic> billData) async {
+  //   try {
+  //     // Convert purchaseList to Firestore-compatible format
+  //     List<Map<String, dynamic>> purchaseList =
+  //         (billData['purchaseList'] ?? []).map<Map<String, dynamic>>((item) {
+  //           return {
+  //             'productCategory': item['productCategory'] ?? '',
+  //             'productName': item['productName'] ?? '',
+  //             'price': item['price'] ?? 0.0,
+  //             'quantity': item['quantity'] ?? 0,
+  //             'total': item['total'] ?? 0.0,
+  //           };
+  //         }).toList();
+
+  //     // Prepare Firestore document data
+  //     Map<String, dynamic> firestoreData = {
+  //       'customerName': billData['customerName'] ?? '',
+  //       'mobileNumber': billData['mobileNumber'] ?? '',
+  //       'billDate': billData['billDate'] ?? '',
+  //       'payStatus': billData['payStatus'] ?? '',
+  //       'paymentMethod': billData['paymentMethod'] ?? '',
+  //       'totalAmount': billData['totalAmount'] ?? 0.0,
+  //       'purchaseList': purchaseList,
+  //     };
+
+  //     // Upload data to Firestore
+  //     await _firestore.collection('bills').add(firestoreData);
+
+  //     return true;
+  //   } catch (e) {
+  //     print("Error uploading bill: $e");
+  //     return false;
+  //   }
+  // }
+
+  Future<String> uploadBillToFirebase(Map<String, dynamic> billData) async {
     try {
-      // Convert purchaseList to Firestore-compatible format
+      // Step 1: Generate receipt ID with daily counter
+      String receiptId = await _generateReceiptId();
+
+      // Step 2: Convert purchaseList to Firestore-compatible format
       List<Map<String, dynamic>> purchaseList =
           (billData['purchaseList'] ?? []).map<Map<String, dynamic>>((item) {
             return {
@@ -131,8 +221,9 @@ Future<List<Map<String, dynamic>>> fetchBills({
             };
           }).toList();
 
-      // Prepare Firestore document data
+      // Step 3: Prepare Firestore document data
       Map<String, dynamic> firestoreData = {
+        'receiptId': receiptId,
         'customerName': billData['customerName'] ?? '',
         'mobileNumber': billData['mobileNumber'] ?? '',
         'billDate': billData['billDate'] ?? '',
@@ -140,19 +231,50 @@ Future<List<Map<String, dynamic>>> fetchBills({
         'paymentMethod': billData['paymentMethod'] ?? '',
         'totalAmount': billData['totalAmount'] ?? 0.0,
         'purchaseList': purchaseList,
+        'timestamp': FieldValue.serverTimestamp(), // Optional
       };
 
-      // Upload data to Firestore
-      await _firestore.collection('bills').add(firestoreData);
+      // Step 4: Upload data to Firestore
+      await _firestore.collection('bills').doc(receiptId).set(firestoreData);
 
-      return true;
+      return receiptId;
     } catch (e) {
       print("Error uploading bill: $e");
-      return false;
+      return "";
     }
   }
 
-  Future<File?> generatePdfAndSave(Map<String, dynamic> billData) async {
+  Future<String> _generateReceiptId() async {
+    final now = DateTime.now();
+    final datePart =
+        "${now.year % 100}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}";
+    final docId = "receipts_$datePart";
+
+    final counterRef = _firestore.collection('counters').doc(docId);
+
+    final newCount = await _firestore.runTransaction((transaction) async {
+      final snapshot = await transaction.get(counterRef);
+
+      int currentCount = 0;
+      if (snapshot.exists) {
+        currentCount = snapshot.data()?['count'] ?? 0;
+      }
+
+      final updatedCount = currentCount + 1;
+      transaction.set(counterRef, {
+        'count': updatedCount,
+      }, SetOptions(merge: true));
+      return updatedCount;
+    });
+
+    final receiptId = "#$datePart${newCount.toString().padLeft(4, '0')}";
+    return receiptId;
+  }
+
+  Future<File?> generatePdfAndSave(
+    Map<String, dynamic> billData,
+    String receiptId,
+  ) async {
     final pdf = pw.Document();
 
     final DateTime now = DateTime.now();
@@ -209,7 +331,7 @@ Future<List<Map<String, dynamic>>> fetchBills({
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
                     pw.Text(
-                      "Receipt No: #1001",
+                      "Receipt No: $receiptId",
                       style: pw.TextStyle(fontSize: 8),
                     ),
                     pw.Text(

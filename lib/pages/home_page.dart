@@ -11,21 +11,30 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 24), // Existing padding
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8.0,
+        vertical: 24,
+      ), // Existing padding
       child: Align(
         alignment: Alignment.topCenter, // Align horizontally centered at top
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center, // Horizontal centering
           children: [
-            const SizedBox(height: 70),  // <-- Added 30px space above the image
             Center(
               child: Transform.translate(
-                offset: const Offset(4, 0), // Shift 4 pixels right
-                child: Image.asset(
-                  'assets/temp.png',
-                  height: 240,
-                  fit: BoxFit.contain,
+                offset: const Offset(4, 0),
+                child: ClipRect(
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    heightFactor:
+                        0.8, // Adjust this value to crop more or less from bottom
+                    child: Image.asset(
+                      'assets/HomeScreenDoodle.png',
+                      height: 360,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -40,10 +49,7 @@ class HomePage extends StatelessWidget {
             const SizedBox(height: 5),
             const Text(
               "Generate a bill for your customer",
-              style: TextStyle(
-                fontSize: 15,
-                color: Colors.black54,
-              ),
+              style: TextStyle(fontSize: 15, color: Colors.black54),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 28),
@@ -51,7 +57,10 @@ class HomePage extends StatelessWidget {
               onPressed: () => onNavigate('CreateBill'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: kMainColor,
-                padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 18),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 36,
+                  vertical: 18,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),

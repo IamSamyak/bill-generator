@@ -23,6 +23,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
 
   String _payStatus = 'Paid';
   bool _billUploadSuccess = false;
+  String _receiptIdForBill = "";
   List<Map<String, TextEditingController>> itemControllers = [];
   final BillService _billService = BillService();
   File? generatedPdf;
@@ -128,12 +129,13 @@ class _CreateBillPageState extends State<CreateBillPage> {
       "purchaseList": validItems,
     };
 
-    bool isSuccess = await _billService.uploadBillToFirebase(billData);
+    String receiptId = await _billService.uploadBillToFirebase(billData);
     setState(() {
-      _billUploadSuccess = isSuccess;
+      _billUploadSuccess = (receiptId != "");
+      _receiptIdForBill = receiptId;
     });
-    generatedPdf = await _billService.generatePdfAndSave(billData);
-    return isSuccess;
+    generatedPdf = await _billService.generatePdfAndSave(billData,_receiptIdForBill);
+    return (receiptId != "");
   }
 
   void _viewPdf() async {
@@ -151,13 +153,13 @@ class _CreateBillPageState extends State<CreateBillPage> {
         );
       }
 
-      setState(() {
-        _nameController.clear();
-        _mobileController.clear();
-        itemControllers.clear();
-        _addItemControllers();
-        _payStatus = 'Paid';
-      });
+      // setState(() {
+      //   _nameController.clear();
+      //   _mobileController.clear();
+      //   itemControllers.clear();
+      //   _addItemControllers();
+      //   _payStatus = 'Paid';
+      // });
     } else {
       ScaffoldMessenger.of(
         context,
@@ -173,7 +175,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
 
     try {
       await WhatsappShare.shareFile(
-        phone: '918888308015',
+        phone: '91${ _mobileController.text.trim()}',
         filePath: [generatedPdf!.path],
       );
     } catch (e) {
