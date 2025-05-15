@@ -36,12 +36,23 @@ class _DateRangeSelectionWidgetState extends State<DateRangeSelectionWidget> {
         children: [
           if (selectedRange == null) ...[
             // Full-width Banner Image (Top Section)
-            SizedBox(
-              width: double.infinity,
-              height: 250,
-              child: Image.asset('assets/RangeAsset.png', fit: BoxFit.cover),
+                       Center(
+              child: Transform.translate(
+                offset: const Offset(4, 0),
+                child: ClipRect(
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    heightFactor:
+                        0.8, // Adjust this value to crop more or less from bottom
+                    child: Image.asset(
+                      'assets/images/RangeAsset.png',
+                      height: 360,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+              ),
             ),
-
             const SizedBox(height: 20),
 
             const Padding(
@@ -50,7 +61,7 @@ class _DateRangeSelectionWidgetState extends State<DateRangeSelectionWidget> {
                 TextSpan(
                   children: [
                     TextSpan(
-                      text: 'Select a Date range to view ',
+                      text: 'Select a date range to view ',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,

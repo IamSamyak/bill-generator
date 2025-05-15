@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../services/bill_service.dart'; // Import the service where searchBillsByCustomerName is defined
+import 'package:intl/intl.dart';
+import '../services/bill_service.dart'; 
+import '../models/Bill.dart'; 
 
 // Define the main color as a constant
 const Color kMainColor = Color(0xFF1864BF);
@@ -16,7 +18,7 @@ class SearchBillPage extends StatefulWidget {
 class _SearchBillPageState extends State<SearchBillPage> {
   TextEditingController receiptIdController = TextEditingController();
   TextEditingController customerNameController = TextEditingController();
-  List<Map<String, dynamic>> bills = [];
+  List<Bill> bills = [];
   String warningMessage = '';
   final BillService _billService = BillService();
 
@@ -134,7 +136,7 @@ class _SearchBillPageState extends State<SearchBillPage> {
                   child: Transform.translate(
                     offset: const Offset(8, 0), // Shift 8 pixels right
                     child: Image.asset(
-                      'assets/SearchBill.png',
+                      'assets/images/SearchBill.png',
                       height: 240,
                       fit: BoxFit.contain,
                     ),
@@ -168,9 +170,9 @@ class _SearchBillPageState extends State<SearchBillPage> {
                   itemBuilder: (context, index) {
                     final bill = bills[index];
                     return ListTile(
-                      title: Text(bill['customerName']),
-                      subtitle: Text('Amount: ${bill['amount']}'),
-                      trailing: Text(bill['date']),
+                      title: Text(bill.customerName),
+                      subtitle: Text('Amount: ${bill.amount}'),
+                     trailing: Text(DateFormat('yyyy-MM-dd').format(bill.date)),
                     );
                   },
                 ),

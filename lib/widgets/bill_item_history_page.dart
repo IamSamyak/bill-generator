@@ -1,19 +1,38 @@
+import 'dart:io';
+import 'package:bill_generator/pages/pdf_viewer_page.dart';
+import 'package:bill_generator/services/bill_service.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:intl/intl.dart'; // Updated for date formatting
-import 'dart:math'; // For generating random colors
+import 'package:intl/intl.dart';
+import 'dart:math';
+import '../models/Bill.dart';
 
 class BillItemWidget extends StatelessWidget {
-  final Map<String, dynamic> bill;
+  final Bill bill;
+  final BillService _billService = BillService();
 
-  const BillItemWidget({super.key, required this.bill});
+  BillItemWidget({super.key, required this.bill});
 
-  // Method to check permission and dial phone number
+  Future<void> _viewPdf(BuildContext context) async {
+    File? generatedPdf = await _billService.generatePdfAndSave(bill, bill.receiptId);
+    if (generatedPdf != null && await generatedPdf.exists()) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PdfViewerPage(path: generatedPdf.path),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("❌ Failed to store bill")),
+      );
+    }
+  }
+
   void _dialNumber(String contactNumber) async {
     final Uri telUri = Uri(scheme: 'tel', path: contactNumber);
 
-    // Check phone call permission
     PermissionStatus status = await Permission.phone.request();
     if (status.isGranted) {
       try {
@@ -33,42 +52,30 @@ class BillItemWidget extends StatelessWidget {
     }
   }
 
-  // Generate a random light color
   Color _generateRandomLightColor() {
     final Random random = Random();
-
     int red = random.nextInt(156) + 100;
     int green = random.nextInt(156) + 100;
     int blue = random.nextInt(156) + 100;
-
     return Color.fromRGBO(red, green, blue, 1.0);
-  }
-
-  // Format the date using intl
-  String _formatDate(String dateString) {
-    try {
-      DateTime parsedDate = DateTime.parse(dateString);
-      return DateFormat('MMM dd, yyyy').format(parsedDate);
-    } catch (e) {
-      debugPrint('Date parsing error: $e');
-      return dateString;
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    print('Bills: $bill');
     return Column(
       children: [
         Row(
           children: [
             GestureDetector(
-              onTap: () => _dialNumber(bill['mobileNumber']),
+              onTap: () => _dialNumber(bill.mobileNumber),
               child: CircleAvatar(
                 backgroundColor: _generateRandomLightColor(),
                 child: Text(
-                  bill['customerName'][0],
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  bill.customerName.isNotEmpty ? bill.customerName[0] : '',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
@@ -78,12 +85,18 @@ class BillItemWidget extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    bill['customerName'],
-                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                    bill.customerName,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
                   ),
                   Text(
-                    'Bill Date: ${_formatDate(bill['date'])}',
-                    style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                    'Bill Date: ${DateFormat('yyyy-MM-dd').format(bill.date)}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[700],
+                    ),
                   ),
                 ],
               ),
@@ -92,14 +105,15 @@ class BillItemWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '₹${bill['amount']}',
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                  '₹${bill.amount.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 GestureDetector(
-                  onTap: () {
-                    debugPrint('View bill tapped for: ${bill['customerName']}');
-                  },
+                  onTap: () => _viewPdf(context),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(

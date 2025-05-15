@@ -1,7 +1,8 @@
+import 'package:bill_generator/models/Bill.dart';
 import 'package:bill_generator/widgets/bill_list_history_page.dart';
 import 'package:flutter/material.dart';
 import 'package:bill_generator/services/bill_service.dart';
-import 'package:intl/intl.dart'; // <-- Added for date formatting
+import 'package:intl/intl.dart'; 
 
 class HistoryPage extends StatefulWidget {
   String payStatusParam;
@@ -14,7 +15,7 @@ class HistoryPage extends StatefulWidget {
 class _HistoryPageState extends State<HistoryPage> {
   final BillService billService = BillService();
 
-  Map<String, List<Map<String, dynamic>>> _bills = {};
+  Map<String, List<Bill>> _bills = {};
   bool _isLoading = true;
   String? _error;
 
@@ -26,7 +27,9 @@ class _HistoryPageState extends State<HistoryPage> {
 
   Future<void> _fetchAndCategorizeBills() async {
     try {
-      final bills = await billService.fetchBills(payStatusFilter: widget.payStatusParam);
+      final List<Bill> bills = await billService.fetchBills(
+        payStatusFilter: widget.payStatusParam,
+      );
       _categorizeBills(bills);
     } catch (e) {
       setState(() {
@@ -36,20 +39,21 @@ class _HistoryPageState extends State<HistoryPage> {
     }
   }
 
-  void _categorizeBills(List<Map<String, dynamic>> bills) {
-    Map<String, List<Map<String, dynamic>>> categorizedBills = {};
+ void _categorizeBills(List<Bill> bills) {
+  Map<String, List<Bill>> categorizedBills = {};
 
-    for (var bill in bills) {
-      DateTime billDate = DateTime.tryParse(bill['date']) ?? DateTime.now();
-      String category = _getCategory(billDate);
-      categorizedBills.putIfAbsent(category, () => []).add(bill);
-    }
-
-    setState(() {
-      _bills = categorizedBills;
-      _isLoading = false;
-    });
+  for (var bill in bills) {
+    DateTime billDate = bill.date;
+    String category = _getCategory(billDate);
+    categorizedBills.putIfAbsent(category, () => []).add(bill);
   }
+
+  setState(() {
+    _bills = categorizedBills;
+    _isLoading = false;
+  });
+}
+
 
   String _getCategory(DateTime billDate) {
     return DateFormat('MMMM yyyy').format(billDate); // e.g., January 2024
@@ -71,11 +75,10 @@ class _HistoryPageState extends State<HistoryPage> {
         children: [
           const SizedBox(height: 8),
           Expanded(
-            child: _bills.isNotEmpty
-                ? BillList(
-                    bills: _bills,
-                  )
-                : const Center(child: Text("No bills available")),
+            child:
+                _bills.isNotEmpty
+                    ? BillList(bills: _bills)
+                    : const Center(child: Text("No bills available")),
           ),
         ],
       ),

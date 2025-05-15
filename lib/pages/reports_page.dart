@@ -1,6 +1,6 @@
+import 'package:bill_generator/models/Bill.dart';
 import 'package:flutter/material.dart';
-import 'package:bill_generator/services/bill_service.dart'; // Import the BillService
-import 'package:bill_generator/widgets/line_chart.dart';
+import 'package:bill_generator/services/bill_service.dart';
 import 'package:bill_generator/widgets/bar_chart.dart';
 import 'package:bill_generator/widgets/graph_description.dart';
 
@@ -16,7 +16,7 @@ class _ReportsPageState extends State<ReportsPage> {
       BillService(); // Create an instance of BillService
   bool _isLoading = true;
   String? _error;
-  List<Map<String, dynamic>> _bills = [];
+  List<Bill> _bills = [];
   String selectedChartType = "Bar Chart";
 
   @override
@@ -44,9 +44,9 @@ class _ReportsPageState extends State<ReportsPage> {
   Map<String, double> calculateMonthlyRevenue() {
     Map<String, double> revenue = {};
     for (var bill in _bills) {
-      DateTime date = DateTime.parse(bill['date']);
+      DateTime date = bill.date;
       String month = "${date.year}-${date.month.toString().padLeft(2, '0')}";
-      revenue[month] = (revenue[month] ?? 0) + bill['amount'];
+      revenue[month] = (revenue[month] ?? 0) + bill.amount;
     }
     return revenue;
   }

@@ -30,7 +30,7 @@ class HomePage extends StatelessWidget {
                     heightFactor:
                         0.8, // Adjust this value to crop more or less from bottom
                     child: Image.asset(
-                      'assets/HomeScreenDoodle.png',
+                      'assets/images/HomeScreenDoodle.png',
                       height: 360,
                       fit: BoxFit.contain,
                     ),

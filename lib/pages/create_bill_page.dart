@@ -7,6 +7,7 @@ import '../widgets/CustomerInputForm.dart';
 import '../widgets/item_input_row.dart';
 import '../services/bill_service.dart';
 import 'pdf_viewer_page.dart';
+import 'package:bill_generator/models/Bill.dart';
 
 class CreateBillPage extends StatefulWidget {
   final VoidCallback onBack;
@@ -80,63 +81,66 @@ class _CreateBillPageState extends State<CreateBillPage> {
     });
   }
 
-  Future<bool> _generateBill() async {
-    if (!_validateInputs()) {
-      return false;
-    }
+Future<bool> _generateBill() async {
+  if (!_validateInputs()) {
+    return false;
+  }
 
-    List<Map<String, dynamic>> validItems = [];
-    for (var controllers in itemControllers) {
-      final type = controllers["productCategory"]!.text.trim();
-      final qty = controllers["quantity"]!.text.trim();
-      final price = controllers["price"]!.text.trim();
+  List<PurchaseItem> validItems = [];
+  for (var controllers in itemControllers) {
+    final type = controllers["productCategory"]!.text.trim();
+    final qtyText = controllers["quantity"]!.text.trim();
+    final priceText = controllers["price"]!.text.trim();
 
-      if (type.isNotEmpty && qty.isNotEmpty && price.isNotEmpty) {
-        validItems.add({
-          "productCategory": type,
-          "productName": type,
-          "quantity": int.tryParse(qty) ?? 0,
-          "price": double.tryParse(price) ?? 0,
-        });
+    if (type.isNotEmpty && qtyText.isNotEmpty && priceText.isNotEmpty) {
+      final qty = int.tryParse(qtyText) ?? 0;
+      final price = double.tryParse(priceText) ?? 0.0;
+      if (qty > 0 && price > 0) {
+        validItems.add(
+          PurchaseItem(
+            productCategory: type,
+            productName: type, // or you can update if you have a different productName
+            quantity: qty,
+            price: price,
+            total: qty * price,
+          ),
+        );
       }
     }
-
-    if (validItems.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("❗ Please enter at least one valid item")),
-      );
-      return false;
-    }
-
-    double total = _calculateTotal(validItems);
-    double discount = total * 0.10;
-
-    // Calculate finalAmount, now we use the state value of finalAmount
-    finalAmount = total - discount;
-
-    final billData = {
-      "customerName": _nameController.text.trim(),
-      "mobileNumber": _mobileController.text.trim(),
-      "billDate": DateTime.now().toIso8601String(),
-      "payStatus": _payStatus,
-      "paymentMethod": "Cash",
-      "totalAmount": total,
-      "discount": discount,
-      "netAmount": finalAmount,
-      "soldBy": "Akash",
-      "createdAt": DateTime.now().toIso8601String(),
-      "updatedAt": DateTime.now().toIso8601String(),
-      "purchaseList": validItems,
-    };
-
-    String receiptId = await _billService.uploadBillToFirebase(billData);
-    setState(() {
-      _billUploadSuccess = (receiptId != "");
-      _receiptIdForBill = receiptId;
-    });
-    generatedPdf = await _billService.generatePdfAndSave(billData,_receiptIdForBill);
-    return (receiptId != "");
   }
+
+  if (validItems.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("❗ Please enter at least one valid item")),
+    );
+    return false;
+  }
+
+  // Calculate total from PurchaseItem totals
+  double total = validItems.fold(0, (sum, item) => sum + item.total);
+  double discount = total * 0.10;
+  finalAmount = total - discount;
+
+  final bill = Bill(
+    receiptId: '',
+    customerName: _nameController.text.trim(),
+    mobileNumber: _mobileController.text.trim(),
+    date: DateTime.now(),
+    payStatus: _payStatus,
+    paymentMethod: "Cash",
+    amount: finalAmount,
+    purchaseList: validItems, 
+  );
+
+
+  String receiptId = await _billService.uploadBillToFirebase(bill);
+  setState(() {
+    _billUploadSuccess = (receiptId != "");
+    _receiptIdForBill = receiptId;
+  });
+  generatedPdf = await _billService.generatePdfAndSave(bill, _receiptIdForBill);
+  return (receiptId != "");
+}
 
   void _viewPdf() async {
     if (generatedPdf == null || !await generatedPdf!.exists()) {
@@ -152,14 +156,6 @@ class _CreateBillPageState extends State<CreateBillPage> {
           ),
         );
       }
-
-      // setState(() {
-      //   _nameController.clear();
-      //   _mobileController.clear();
-      //   itemControllers.clear();
-      //   _addItemControllers();
-      //   _payStatus = 'Paid';
-      // });
     } else {
       ScaffoldMessenger.of(
         context,
