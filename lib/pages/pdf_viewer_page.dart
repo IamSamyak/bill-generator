@@ -1,5 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:pdfx/pdfx.dart';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 class PdfViewerPage extends StatefulWidget {
   final String path;
@@ -11,31 +13,46 @@ class PdfViewerPage extends StatefulWidget {
 }
 
 class _PdfViewerPageState extends State<PdfViewerPage> {
-  late PdfController _pdfController;
+  late PdfViewerController _pdfViewerController;
 
   @override
   void initState() {
     super.initState();
-    _pdfController = PdfController(
-      document: PdfDocument.openFile(widget.path),
-    );
+    _pdfViewerController = PdfViewerController();
   }
 
   @override
   void dispose() {
-    _pdfController.dispose();
+    _pdfViewerController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Bill Preview")),
-      body: PdfView(
-        controller: _pdfController,
-        scrollDirection: Axis.vertical,
-        pageSnapping: false,
-        physics: const BouncingScrollPhysics(),
+      appBar: AppBar(
+        title: const Text("Bill Preview"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.zoom_in),
+            onPressed: () {
+              _pdfViewerController.zoomLevel += 0.25;
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.zoom_out),
+            onPressed: () {
+              _pdfViewerController.zoomLevel -= 0.25;
+            },
+          ),
+        ],
+      ),
+      body: SfPdfViewer.file(
+        File(widget.path),
+        controller: _pdfViewerController,
+        canShowScrollHead: true,
+        canShowScrollStatus: true,
+        scrollDirection: PdfScrollDirection.vertical,
       ),
     );
   }
