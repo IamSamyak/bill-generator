@@ -17,7 +17,6 @@ class _ReportsPageState extends State<ReportsPage> {
   bool _isLoading = true;
   String? _error;
   List<Bill> _bills = [];
-  String selectedChartType = "Bar Chart";
 
   @override
   void initState() {

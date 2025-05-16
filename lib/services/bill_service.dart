@@ -1,4 +1,5 @@
 import 'package:bill_generator/models/Bill.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
@@ -37,6 +38,37 @@ class BillService {
       throw Exception('Failed to fetch bills: $e');
     }
   }
+
+Future<List<Bill>> searchBillsWithinDateRange({
+  required DateTimeRange dateRange,
+  String payStatusFilter = 'All',
+}) async {
+  try {
+    // Use Firestore range query on `billDate` field
+    QuerySnapshot querySnapshot = await _firestore
+        .collection('bills')
+        .where('billDate', isGreaterThanOrEqualTo: Timestamp.fromDate(dateRange.start))
+        .where('billDate', isLessThanOrEqualTo: Timestamp.fromDate(
+          dateRange.end.add(const Duration(days: 1)).subtract(const Duration(milliseconds: 1))
+        )) // Inclusive of end date
+        .orderBy('billDate', descending: true)
+        .get();
+
+    List<Bill> bills = [];
+
+    for (var doc in querySnapshot.docs) {
+      var data = doc.data() as Map<String, dynamic>;
+
+      if (payStatusFilter == 'All' || data['payStatus'] == payStatusFilter) {
+        bills.add(Bill.fromFirestore(data, doc.id));
+      }
+    }
+
+    return bills;
+  } catch (e) {
+    throw Exception('Failed to search bills in date range: $e');
+  }
+}
 
   Future<List<Bill>> searchBillsByReceiptId({required String receiptId}) async {
     try {
@@ -167,6 +199,33 @@ class BillService {
 
     final receiptId = "$datePart${newCount.toString().padLeft(4, '0')}";
     return receiptId;
+  }
+
+  Future<bool> updateBillToFirebase(Bill bill) async {
+    try {
+      // Prepare updated data map (similar to upload but no new receiptId generation)
+      Map<String, dynamic> firestoreData = {
+        'customerName': bill.customerName,
+        'mobileNumber': bill.mobileNumber,
+        'billDate': bill.date, // updated bill date
+        'payStatus': bill.payStatus,
+        'paymentMethod': bill.paymentMethod,
+        'totalAmount': bill.amount,
+        'purchaseList': bill.purchaseList.map((item) => item.toMap()).toList(),
+        'timestamp': FieldValue.serverTimestamp(), // update timestamp as well
+      };
+
+      // Update the Firestore document identified by receiptId
+      await _firestore
+          .collection('bills')
+          .doc(bill.receiptId)
+          .update(firestoreData);
+
+      return true; // indicate success
+    } catch (e) {
+      print("Error updating bill: $e");
+      return false; // indicate failure
+    }
   }
 
   Future<File?> generatePdfAndSave(Bill bill, String receiptId) async {

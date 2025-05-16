@@ -25,7 +25,7 @@ class _SearchBillPageState extends State<SearchBillPage> {
   bool isInputDisabled = false;
 
   void _searchBills() async {
-    if (isSearching) return; // prevent multiple simultaneous requests
+    if (isSearching) return;
 
     setState(() {
       isSearching = true;
@@ -64,7 +64,7 @@ class _SearchBillPageState extends State<SearchBillPage> {
     } finally {
       setState(() {
         isSearching = false;
-        isInputDisabled = false; // enable input after search
+        isInputDisabled = false;
       });
     }
   }
@@ -85,12 +85,9 @@ class _SearchBillPageState extends State<SearchBillPage> {
       List<Bill> results = await _billService.searchBillsByReceiptId(
         receiptId: scannedCode.toString(),
       );
-      setState(() {
-        bills = results;
-      });
 
       setState(() {
-        searchController.text = scannedCode.toString();
+        bills = results;
         isInputDisabled = false;
         isSearching = false;
       });
@@ -109,7 +106,6 @@ class _SearchBillPageState extends State<SearchBillPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 30),
-
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: TextField(
@@ -135,9 +131,7 @@ class _SearchBillPageState extends State<SearchBillPage> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 12),
-
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: ElevatedButton.icon(
@@ -157,9 +151,7 @@ class _SearchBillPageState extends State<SearchBillPage> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 16),
-
               if (warningMessage.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.all(8.0),
@@ -172,7 +164,6 @@ class _SearchBillPageState extends State<SearchBillPage> {
                     textAlign: TextAlign.center,
                   ),
                 ),
-
               if (bills.isEmpty) ...[
                 Center(
                   child: Transform.translate(
@@ -199,7 +190,6 @@ class _SearchBillPageState extends State<SearchBillPage> {
                   textAlign: TextAlign.center,
                 ),
               ],
-
               if (bills.isNotEmpty)
                 ListView.builder(
                   shrinkWrap: true,
@@ -207,12 +197,12 @@ class _SearchBillPageState extends State<SearchBillPage> {
                   itemCount: bills.length,
                   itemBuilder: (context, index) {
                     final bill = bills[index];
-                    return ListTile(
-                      title: Text(bill.customerName),
-                      subtitle: Text('Amount: ${bill.amount}'),
-                      trailing: Text(
-                        DateFormat('yyyy-MM-dd').format(bill.date),
-                      ),
+                    Color statusColor =
+                        bill.payStatus.toLowerCase() == 'paid'
+                            ? Colors.green
+                            : Colors.red;
+
+                    return GestureDetector(
                       onTap: () {
                         Navigator.push(
                           context,
@@ -221,12 +211,96 @@ class _SearchBillPageState extends State<SearchBillPage> {
                           ),
                         );
                       },
+                      child: Card(
+                        margin: const EdgeInsets.symmetric(
+                          vertical: 8,
+                          horizontal: 16,
+                        ),
+                        elevation: 3,
+                        color: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12), // Reduced padding
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize:
+                                MainAxisSize.min, // Ensures minimum height
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      bill.customerName,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    DateFormat('yyyy-MM-dd').format(bill.date),
+                                    style: const TextStyle(color: Colors.grey),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                bill.mobileNumber,
+                                style: const TextStyle(fontSize: 14),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  // Status at bottom-left
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          bill.payStatus == 'Paid'
+                                              ? Colors.green[100]
+                                              : Colors.red[100],
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      bill.payStatus,
+                                      style: TextStyle(
+                                        color:
+                                            bill.payStatus == 'Paid'
+                                                ? Colors.green
+                                                : Colors.red,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ),
+                                  // Amount at bottom-right
+                                  Text(
+                                    '₹${bill.amount.toStringAsFixed(2)}',
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     );
                   },
                 ),
-
               const SizedBox(height: 16),
-
               ElevatedButton(
                 onPressed: isSearching ? null : _searchBills,
                 style: ElevatedButton.styleFrom(

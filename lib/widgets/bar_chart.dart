@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fl_chart/fl_chart.dart';
+import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:intl/intl.dart';
 
 class BarChartWidget extends StatelessWidget {
@@ -17,143 +17,60 @@ class BarChartWidget extends StatelessWidget {
     }
   }
 
-  // Function to format y-axis labels in the 2.5k, 3k format
-  String formatYAxisLabel(double value) {
-    if (value >= 1000) {
-      return '${(value / 1000).toStringAsFixed(1)}k';
-    }
-    return value.toStringAsFixed(0);
-  }
-
   @override
   Widget build(BuildContext context) {
-    List<String> months = monthlyRevenue.keys.toList();
-    List<String> reversedMonths = months.reversed.toList();
-
-    // Extract years from the keys
-    Set<int> years = months.map((e) => int.parse(e.split('-')[0])).toSet();
-
-    // Determine the year label
-    String yearLabel;
-    if (years.length == 1) {
-      yearLabel = years.first.toString();
-    } else {
-      int minYear = years.reduce((a, b) => a < b ? a : b);
-      int maxYear = years.reduce((a, b) => a > b ? a : b);
-      yearLabel = "$minYear–${maxYear % 100}";
-    }
-
-    // Calculate minY and maxY
-    double minY = monthlyRevenue.values.reduce((a, b) => a < b ? a : b);
-    double maxY = monthlyRevenue.values.reduce((a, b) => a > b ? a : b);
-
-    // Adjust to nearest 1000 for cleaner axis
-    double interval = 1000;
-    minY = minY > 0 ? 0 : (minY ~/ interval) * interval;
-    maxY = ((maxY / interval).ceil()) * interval;
-
-    List<BarChartGroupData> barGroups =
-        reversedMonths.asMap().entries.map((entry) {
-          return BarChartGroupData(
-            x: entry.key,
-            barRods: [
-              BarChartRodData(
-                toY: monthlyRevenue[entry.value]!,
-                color: const Color(0xFF1A66BE), // Custom color
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(6),
-                  topRight: Radius.circular(6),
-                ),
-                width: 24,
-              ),
-            ],
-          );
-        }).toList();
+    List<_RevenueData> data = monthlyRevenue.entries.map((entry) {
+      return _RevenueData(formatMonthName(entry.key), entry.value);
+    }).toList();
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          padding: const EdgeInsets.all(16.0),
-          height: 300,
-          child: BarChart(
-            BarChartData(
-              alignment: BarChartAlignment.spaceEvenly,
-              minY: minY,
-              maxY: maxY,
-              gridData: FlGridData(
-                show: true,
-                drawVerticalLine: false,
-                getDrawingHorizontalLine: (value) {
-                  return FlLine(color: Colors.grey[300], strokeWidth: 1);
-                },
-                checkToShowHorizontalLine:
-                    (value) => value >= minY,
-                horizontalInterval: (maxY - minY) / 5,
-              ),
-
-              extraLinesData: ExtraLinesData(
-                horizontalLines: [
-                  HorizontalLine(
-                    y: 0,
-                    color: const Color.fromARGB(255, 14, 14, 14),
-                    strokeWidth: 0.5,
-                  ),
-                ],
-              ),
-              titlesData: FlTitlesData(
-                leftTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: 40,
-                    interval: (maxY - minY) / 5,
-                    getTitlesWidget: (value, meta) {
-                      return Text(
-                        "${formatYAxisLabel(value)}",
-                        style: const TextStyle(fontSize: 12),
-                      );
-                    },
-                  ),
-                ),
-                bottomTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: 30,
-                    getTitlesWidget: (value, meta) {
-                      if (value.toInt() >= 0 &&
-                          value.toInt() < reversedMonths.length) {
-                        String label = formatMonthName(
-                          reversedMonths[value.toInt()],
-                        );
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 6.0),
-                          child: Text(
-                            label,
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        );
-                      }
-                      return const SizedBox();
-                    },
-                  ),
-                ),
-                topTitles: AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                rightTitles: AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-              ),
-              borderData: FlBorderData(show: false),
-              barGroups: barGroups,
-            ),
+        SfCartesianChart(
+          primaryXAxis: CategoryAxis(),
+          primaryYAxis: NumericAxis(
+            numberFormat: NumberFormat.compact(), // e.g., 2.5k
           ),
+          tooltipBehavior: TooltipBehavior(enable: true),
+          series: <CartesianSeries>[
+            ColumnSeries<_RevenueData, String>(
+              dataSource: data,
+              xValueMapper: (_RevenueData revenue, _) => revenue.month,
+              yValueMapper: (_RevenueData revenue, _) => revenue.revenue,
+              borderRadius: const BorderRadius.all(Radius.circular(6)),
+              color: const Color(0xFF1A66BE),
+              width: 0.6,
+              name: 'Revenue',
+              dataLabelSettings: const DataLabelSettings(isVisible: true),
+            ),
+          ],
         ),
+        const SizedBox(height: 12),
         Text(
-          yearLabel,
+          _getYearLabel(),
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
         ),
       ],
     );
   }
+
+  String _getYearLabel() {
+    Set<int> years =
+        monthlyRevenue.keys.map((e) => int.parse(e.split('-')[0])).toSet();
+
+    if (years.length == 1) {
+      return years.first.toString();
+    } else {
+      int minYear = years.reduce((a, b) => a < b ? a : b);
+      int maxYear = years.reduce((a, b) => a > b ? a : b);
+      return "$minYear–${maxYear % 100}";
+    }
+  }
+}
+
+class _RevenueData {
+  final String month;
+  final double revenue;
+
+  _RevenueData(this.month, this.revenue);
 }
