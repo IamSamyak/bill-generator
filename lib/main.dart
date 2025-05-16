@@ -1,5 +1,5 @@
 import 'package:bill_generator/pages/AddCategoriesPage.dart';
-import 'package:bill_generator/pages/UpdateBill.dart';
+import 'package:bill_generator/pages/search_bill_page.dart';
 import 'package:bill_generator/pages/menu_screen_page.dart';
 import 'package:bill_generator/pages/range_dashboard_page.dart';
 import 'package:bill_generator/pages/reports_page.dart';

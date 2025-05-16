@@ -38,11 +38,28 @@ class _CreateBillPageState extends State<CreateBillPage> {
   }
 
   void _addItemControllers() {
+    final productCategory = TextEditingController();
+    final quantity = TextEditingController();
+    final price = TextEditingController();
+
+    void refreshIfComplete() {
+      if (productCategory.text.isNotEmpty &&
+          quantity.text.isNotEmpty &&
+          price.text.isNotEmpty) {
+        setState(() {});
+      }
+    }
+
+    productCategory.addListener(refreshIfComplete);
+    quantity.addListener(refreshIfComplete);
+    price.addListener(refreshIfComplete);
+
     itemControllers.add({
-      "productCategory": TextEditingController(),
-      "quantity": TextEditingController(),
-      "price": TextEditingController(),
+      "productCategory": productCategory,
+      "quantity": quantity,
+      "price": price,
     });
+
     setState(() {});
   }
 
@@ -81,66 +98,65 @@ class _CreateBillPageState extends State<CreateBillPage> {
     });
   }
 
-Future<bool> _generateBill() async {
-  if (!_validateInputs()) {
-    return false;
-  }
+  Future<bool> _generateBill() async {
+    if (!_validateInputs()) {
+      return false;
+    }
 
-  List<PurchaseItem> validItems = [];
-  for (var controllers in itemControllers) {
-    final type = controllers["productCategory"]!.text.trim();
-    final qtyText = controllers["quantity"]!.text.trim();
-    final priceText = controllers["price"]!.text.trim();
+    List<PurchaseItem> validItems = [];
+    for (var controllers in itemControllers) {
+      final type = controllers["productCategory"]!.text.trim();
+      final qtyText = controllers["quantity"]!.text.trim();
+      final priceText = controllers["price"]!.text.trim();
 
-    if (type.isNotEmpty && qtyText.isNotEmpty && priceText.isNotEmpty) {
-      final qty = int.tryParse(qtyText) ?? 0;
-      final price = double.tryParse(priceText) ?? 0.0;
-      if (qty > 0 && price > 0) {
-        validItems.add(
-          PurchaseItem(
-            productCategory: type,
-            productName: type, // or you can update if you have a different productName
-            quantity: qty,
-            price: price,
-            total: qty * price,
-          ),
-        );
+      if (type.isNotEmpty && qtyText.isNotEmpty && priceText.isNotEmpty) {
+        final qty = int.tryParse(qtyText) ?? 0;
+        final price = double.tryParse(priceText) ?? 0.0;
+        if (qty > 0 && price > 0) {
+          validItems.add(
+            PurchaseItem(
+              productCategory: type,
+              productName: type, // or update if you have a different productName
+              quantity: qty,
+              price: price,
+              total: qty * price,
+            ),
+          );
+        }
       }
     }
-  }
 
-  if (validItems.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("❗ Please enter at least one valid item")),
+    if (validItems.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("❗ Please enter at least one valid item")),
+      );
+      return false;
+    }
+
+    // Calculate total from PurchaseItem totals
+    double total = validItems.fold(0, (sum, item) => sum + item.total);
+    double discount = total * 0.10;
+    finalAmount = total - discount;
+
+    final bill = Bill(
+      receiptId: '',
+      customerName: _nameController.text.trim(),
+      mobileNumber: _mobileController.text.trim(),
+      date: DateTime.now(),
+      payStatus: _payStatus,
+      paymentMethod: "Cash",
+      amount: finalAmount,
+      purchaseList: validItems,
     );
-    return false;
+
+    String receiptId = await _billService.uploadBillToFirebase(bill);
+    setState(() {
+      _billUploadSuccess = (receiptId != "");
+      _receiptIdForBill = receiptId;
+    });
+    generatedPdf = await _billService.generatePdfAndSave(bill, _receiptIdForBill);
+    return (receiptId != "");
   }
-
-  // Calculate total from PurchaseItem totals
-  double total = validItems.fold(0, (sum, item) => sum + item.total);
-  double discount = total * 0.10;
-  finalAmount = total - discount;
-
-  final bill = Bill(
-    receiptId: '',
-    customerName: _nameController.text.trim(),
-    mobileNumber: _mobileController.text.trim(),
-    date: DateTime.now(),
-    payStatus: _payStatus,
-    paymentMethod: "Cash",
-    amount: finalAmount,
-    purchaseList: validItems, 
-  );
-
-
-  String receiptId = await _billService.uploadBillToFirebase(bill);
-  setState(() {
-    _billUploadSuccess = (receiptId != "");
-    _receiptIdForBill = receiptId;
-  });
-  generatedPdf = await _billService.generatePdfAndSave(bill, _receiptIdForBill);
-  return (receiptId != "");
-}
 
   void _viewPdf() async {
     if (generatedPdf == null || !await generatedPdf!.exists()) {
@@ -171,7 +187,7 @@ Future<bool> _generateBill() async {
 
     try {
       await WhatsappShare.shareFile(
-        phone: '91${ _mobileController.text.trim()}',
+        phone: '91${_mobileController.text.trim()}',
         filePath: [generatedPdf!.path],
       );
     } catch (e) {
@@ -184,13 +200,12 @@ Future<bool> _generateBill() async {
 
   @override
   Widget build(BuildContext context) {
-    final items =
-        itemControllers.map((c) {
-          return {
-            "price": double.tryParse(c["price"]!.text) ?? 0,
-            "quantity": int.tryParse(c["quantity"]!.text) ?? 0,
-          };
-        }).toList();
+    final items = itemControllers.map((c) {
+      return {
+        "price": double.tryParse(c["price"]!.text) ?? 0,
+        "quantity": int.tryParse(c["quantity"]!.text) ?? 0,
+      };
+    }).toList();
 
     final total = _calculateTotal(items);
     final discount = total * 0.10;
@@ -232,11 +247,8 @@ Future<bool> _generateBill() async {
                 productCategoryController: controller["productCategory"]!,
                 quantityController: controller["quantity"]!,
                 priceController: controller["price"]!,
-                onRemove:
-                    () => _removeItem(index), // 👈 pass the index to remove
-                showRemoveIcon:
-                    itemControllers.length >
-                    1, // only show remove if more than one
+                onRemove: () => _removeItem(index),
+                showRemoveIcon: itemControllers.length > 1,
               );
             }),
 
@@ -246,36 +258,6 @@ Future<bool> _generateBill() async {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  GestureDetector(
-                    onTap: () {
-                      final last = itemControllers.last;
-                      final filled =
-                          last["productCategory"]!.text.isNotEmpty &&
-                          last["quantity"]!.text.isNotEmpty &&
-                          last["price"]!.text.isNotEmpty;
-                      if (filled) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("✅ Current item row is valid."),
-                          ),
-                        );
-                        setState(() {}); // Refresh total
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              "⚠️ Please fill all fields to confirm this item",
-                            ),
-                          ),
-                        );
-                      }
-                    },
-                    child: const CircleAvatar(
-                      backgroundColor: Color(0xFF28a745),
-                      child: Icon(Icons.done, color: Colors.white),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
                   GestureDetector(
                     onTap: () {
                       if (_canAddMore()) {

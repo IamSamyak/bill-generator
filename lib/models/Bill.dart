@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart'; // Needed for Timestamp
+
 class Bill {
   final String receiptId;
   final String customerName;
@@ -19,13 +21,19 @@ class Bill {
     required this.purchaseList,
   });
 
-  factory Bill.fromFirestore(Map<String, dynamic> data,String documentId) {
-    DateTime parsedDate =
-        DateTime.tryParse(data['billDate'] ?? '') ?? DateTime.now();
+  factory Bill.fromFirestore(Map<String, dynamic> data, String documentId) {
+    DateTime parsedDate;
 
+    if (data['billDate'] is Timestamp) {
+      parsedDate = (data['billDate'] as Timestamp).toDate();
+    } else if (data['billDate'] is String) {
+      parsedDate = DateTime.tryParse(data['billDate']) ?? DateTime.now();
+    } else {
+      parsedDate = DateTime.now();
+    }
 
     List<PurchaseItem> purchaseItems = (data['purchaseList'] ?? [])
-        .map<PurchaseItem>((item) => PurchaseItem.fromMap(item))
+        .map<PurchaseItem>((item) => PurchaseItem.fromMap(Map<String, dynamic>.from(item)))
         .toList();
 
     return Bill(
@@ -44,10 +52,10 @@ class Bill {
     return {
       'customerName': customerName,
       'mobileNumber': mobileNumber,
-      'date': date,
+      'billDate': Timestamp.fromDate(date),
       'payStatus': payStatus,
       'paymentMethod': paymentMethod,
-      'amount': amount,
+      'totalAmount': amount,
       'purchaseList': purchaseList.map((p) => p.toMap()).toList(),
     };
   }
