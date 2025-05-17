@@ -24,6 +24,20 @@ class _CustomerInputFormState extends State<CustomerInputForm> {
   bool _isListening = false;
   String _lastRecognized = '';
   TextEditingController? _activeController;
+  String _activeLabel = '';
+
+  final Map<String, String> _spokenToDigit = {
+    "zero": "0",
+    "one": "1",
+    "two": "2",
+    "three": "3",
+    "four": "4",
+    "five": "5",
+    "six": "6",
+    "seven": "7",
+    "eight": "8",
+    "nine": "9",
+  };
 
   @override
   void initState() {
@@ -37,22 +51,29 @@ class _CustomerInputFormState extends State<CustomerInputForm> {
       setState(() {
         _isListening = true;
         _activeController = controller;
+        _activeLabel = label;
+        _lastRecognized = '';
       });
 
       _speech.listen(
         onResult: (result) {
+          String recognized = result.recognizedWords;
+
+          if (_activeLabel.toLowerCase().contains("mobile")) {
+            recognized = _processMobileInput(recognized);
+          }
+
           setState(() {
-            _lastRecognized = result.recognizedWords;
-            _activeController!.text = _lastRecognized;
+            _lastRecognized = recognized;
+            _activeController!.text = recognized;
             _activeController!.selection = TextSelection.fromPosition(
-              TextPosition(offset: _activeController!.text.length),
+              TextPosition(offset: recognized.length),
             );
           });
         },
         listenMode: stt.ListenMode.dictation,
       );
 
-      // Show modal
       _showListeningModal(label);
     } else {
       setState(() => _isListening = false);
@@ -68,78 +89,102 @@ class _CustomerInputFormState extends State<CustomerInputForm> {
     Navigator.of(context).maybePop(); // Close modal if open
   }
 
+  String _processMobileInput(String input) {
+    input = input.toLowerCase();
+    for (var entry in _spokenToDigit.entries) {
+      input = input.replaceAll(entry.key, entry.value);
+    }
+
+    // Remove non-digit characters and limit to 10 digits
+    final digitsOnly = input.replaceAll(RegExp(r'\D'), '');
+    return digitsOnly.length > 10 ? digitsOnly.substring(0, 10) : digitsOnly;
+  }
+
 void _showListeningModal(String label) {
   showDialog(
     context: context,
     barrierDismissible: false,
-    builder: (_) => Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      backgroundColor: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.mic, size: 48, color: Colors.blue.shade700),
-            const SizedBox(height: 16),
-            Text(
-              "Listening for $label",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.blue.shade700,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              "Please speak the $label now.",
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey.shade700,
-                fontStyle: FontStyle.italic,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.blue.shade200),
-              ),
-              child: Text(
-                _lastRecognized.isNotEmpty ? _lastRecognized : "Listening...",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.blue.shade900,
+    builder: (_) => StatefulBuilder(
+      builder: (context, setState) {
+        // We'll listen to changes in _lastRecognized using a timer or by passing setState
+        // So to update the dialog UI, we call setState from the onResult callback
+        // Let's do this by passing a callback when starting listening.
+
+        // But since _showListeningModal is called after _speech.listen(), and onResult calls setState,
+        // the dialog will update because _lastRecognized is in the State.
+
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          backgroundColor: Colors.white,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.mic, size: 48, color: Colors.blue.shade700),
+                const SizedBox(height: 16),
+                Text(
+                  "Listening for $label",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue.shade700,
+                  ),
                 ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red.shade600,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                const SizedBox(height: 12),
+                // Show this text only if no speech recognized yet:
+                if (_lastRecognized.isEmpty) ...[
+                  Text(
+                    "Please speak the $label now.",
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey.shade700,
+                      fontStyle: FontStyle.italic,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                ],
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.blue.shade200),
+                  ),
+                  child: Text(
+                    _lastRecognized.isNotEmpty ? _lastRecognized : "Listening...",
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.blue.shade900,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
-              ),
-              onPressed: _stopListening,
-              icon: const Icon(Icons.stop, size: 24),
-              label: const Text(
-                "Stop Listening",
-                style: TextStyle(fontSize: 16),
-              ),
+                const SizedBox(height: 24),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red.shade600,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: _stopListening,
+                  icon: const Icon(Icons.stop, size: 24),
+                  label: const Text(
+                    "Stop Listening",
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     ),
   );
 }
-
 
   Widget _buildVoiceInputField({
     required String label,
