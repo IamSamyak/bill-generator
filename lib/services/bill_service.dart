@@ -10,7 +10,7 @@ import 'company_profile_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class BillService {
-  final CompanyProfileService _service = CompanyProfileService();
+  final CompanyProfileService _companyProfileService = CompanyProfileService();
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   DocumentSnapshot? lastDocument;
@@ -297,9 +297,13 @@ class BillService {
   Future<File?> generatePdfAndSave(
     Bill bill,
     String receiptId,
-    ShopDetail shopDetail, // Pass shop details directly
   ) async {
     final pdf = pw.Document();
+    ShopDetail? shopDetail = await _companyProfileService.fetchShopDetails(); 
+    print("shopdetail $shopDetail");
+    if(shopDetail == null){
+      return null;
+    }
 
     final DateTime now = DateTime.now();
     final String billDate = DateFormat('yyyy-MM-dd').format(bill.date);

@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:bill_generator/main.dart';
 import 'package:bill_generator/models/ShopDetail.dart';
 import 'package:bill_generator/widgets/bill_action_buttons.dart';
 import 'package:flutter/material.dart';
@@ -154,25 +153,14 @@ class _CreateBillPageState extends State<CreateBillPage> {
     );
 
     String receiptId = await _billService.uploadBillToFirebase(bill);
-    ShopDetail? shopDetail =
-        Provider.of<ShopDetailProvider>(context, listen: false).shopDetail;
-    if (shopDetail == null) {
-      // Handle the error case when shopDetail is not set
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("❗ Shop details are missing! Cannot generate bill."),
-        ),
-      );
-      return false;
-    }
+
     setState(() {
       _billUploadSuccess = (receiptId != "");
       _receiptIdForBill = receiptId;
     });
     generatedPdf = await _billService.generatePdfAndSave(
       bill,
-      _receiptIdForBill,
-      shopDetail
+      _receiptIdForBill
     );
     return (receiptId != "");
   }

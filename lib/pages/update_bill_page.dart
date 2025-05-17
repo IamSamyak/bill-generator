@@ -1,8 +1,5 @@
 import 'dart:io';
-import 'package:bill_generator/main.dart';
-import 'package:bill_generator/models/ShopDetail.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:whatsapp_share/whatsapp_share.dart';
 import '../widgets/bill_action_buttons.dart';
 import '../widgets/order_summary.dart';
@@ -181,17 +178,6 @@ class _UpdateBillPageState extends State<UpdateBillPage> {
       );
       return false;
     }
-    ShopDetail? shopDetail =
-        Provider.of<ShopDetailProvider>(context, listen: false).shopDetail;
-    if (shopDetail == null) {
-      // Handle the error case when shopDetail is not set
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("❗ Shop details are missing! Cannot generate bill."),
-        ),
-      );
-      return false;
-    }
     double total = validItems.fold(0, (sum, item) => sum + item.total);
     double discount = total * 0.10;
     finalAmount = total - discount;
@@ -215,8 +201,7 @@ class _UpdateBillPageState extends State<UpdateBillPage> {
 
     generatedPdf = await _billService.generatePdfAndSave(
       updatedBill,
-      _receiptIdForBill,
-      shopDetail,
+      _receiptIdForBill
     );
     return (receiptId != "");
   }

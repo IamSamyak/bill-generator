@@ -10,9 +10,8 @@ import 'package:flutter/material.dart';
 import 'package:bill_generator/pages/home_page.dart';
 import 'package:bill_generator/pages/create_bill_page.dart';
 import 'package:bill_generator/pages/history_page.dart';
-import 'package:bill_generator/widgets/bottom_nav_bar.dart';
-import 'package:bill_generator/widgets/app_drawer.dart';
-import 'package:provider/provider.dart';
+import 'package:bill_generator/widgets/bottom_nav_bar.dart'; // Import the new widget
+import 'package:bill_generator/widgets/app_drawer.dart'; // Import the new widget
 
 // Define the main color as a constant
 const Color kMainColor = Color(0xFF1A66BE);
@@ -20,31 +19,7 @@ const Color kMainColor = Color(0xFF1A66BE);
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  runApp(
-    ChangeNotifierProvider(
-      create: (_) => ShopDetailProvider(),
-      child: const MyApp(),
-    ),
-  );
-}
-
-class ShopDetailProvider extends ChangeNotifier {
-  ShopDetail? _shopDetail;
-  final CompanyProfileService _companyProfileService = CompanyProfileService();
-
-  ShopDetail? get shopDetail => _shopDetail;
-
-  ShopDetailProvider() {
-    fetchShopDetails();
-  }
-
-  Future<void> fetchShopDetails() async {
-    final details = await _companyProfileService.fetchShopDetails();
-    if (details != null) {
-      _shopDetail = details;
-      notifyListeners();
-    }
-  }
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -90,6 +65,27 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
   String _currentPage = 'Home';
+
+  // Hold full shop details, not just name
+  ShopDetail? _shopDetail;
+
+  final CompanyProfileService _companyProfileService = CompanyProfileService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadShopDetails();
+  }
+
+  Future<void> _loadShopDetails() async {
+    final details = await _companyProfileService.fetchShopDetails();
+    if (details != null) {
+      setState(() {
+        _shopDetail = details;
+      });
+    }
+    print("Shop details: $_shopDetail");
+  }
 
   void _navigateToPage(String page) {
     setState(() {
@@ -142,9 +138,6 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Access shopDetail from Provider
-    final shopDetail = context.watch<ShopDetailProvider>().shopDetail;
-
     Widget bodyWidget;
 
     switch (_currentPage) {
@@ -177,10 +170,8 @@ class _MainScreenState extends State<MainScreen> {
         bodyWidget = OperateCategories();
         break;
       default:
-        bodyWidget = HomePage(
-          onNavigate: _navigateToPage,
-          shopName: shopDetail?.shopName ?? "Akash Men's Wear",
-        );
+        // Pass only shopName to HomePage
+        bodyWidget = HomePage(onNavigate: _navigateToPage, shopName: _shopDetail?.shopName ?? "Akash Men's Wear");
     }
 
     return Scaffold(

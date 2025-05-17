@@ -1,10 +1,7 @@
 import 'dart:io';
-import 'package:bill_generator/main.dart';
-import 'package:bill_generator/models/ShopDetail.dart';
 import 'package:bill_generator/pages/pdf_viewer_page.dart';
 import 'package:bill_generator/services/bill_service.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:intl/intl.dart';
@@ -18,21 +15,9 @@ class BillItemWidget extends StatelessWidget {
   BillItemWidget({super.key, required this.bill});
 
   Future<void> _viewPdf(BuildContext context) async {
-    ShopDetail? shopDetail =
-        Provider.of<ShopDetailProvider>(context, listen: false).shopDetail;
-
-    if (shopDetail == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("❗ Shop details missing! Cannot generate PDF."),
-        ),
-      );
-      return;
-    }
     File? generatedPdf = await _billService.generatePdfAndSave(
       bill,
-      bill.receiptId,
-      shopDetail,
+      bill.receiptId
     );
     if (generatedPdf != null && await generatedPdf!.exists()) {
       showDialog(
