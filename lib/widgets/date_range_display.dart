@@ -1,7 +1,10 @@
 import 'package:bill_generator/widgets/pie_chart.dart';
+import 'package:bill_generator/widgets/range_reports.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:bill_generator/models/Bill.dart';
+import 'package:bill_generator/models/Category.dart';
+import 'package:bill_generator/services/category_service.dart';
 
 class DateRangeDisplay extends StatelessWidget {
   final DateTimeRange selectedRange;
@@ -24,25 +27,38 @@ class DateRangeDisplay extends StatelessWidget {
       (sum, bill) => sum + bill.amount,
     );
 
-    final billsPaid =
-        filteredBills
-            .where((bill) => bill.payStatus.toLowerCase() == 'paid')
-            .length;
+    final billsPaid = filteredBills
+        .where((bill) => bill.payStatus.toLowerCase() == 'paid')
+        .length;
+
     final unpaidBills = filteredBills.length - billsPaid;
 
-    // Map of productName to (quantity, total revenue)
-    final Map<String, Map<String, dynamic>> soldItemsMap = {};
+    // Get all predefined categories
+    final List<Category> availableCategories =
+        CategoryService().getCategories();
+
+    // Map to hold sales data for each category
+    final Map<Category, Map<String, dynamic>> soldItemsMap = {
+      for (var category in availableCategories)
+        category: {'quantity': 0, 'total': 0.0},
+    };
+
+    // Populate map with actual sold data
     for (var bill in filteredBills) {
       for (var item in bill.purchaseList) {
-        if (soldItemsMap.containsKey(item.productName)) {
-          soldItemsMap[item.productName]!['quantity'] += item.quantity;
-          soldItemsMap[item.productName]!['total'] += item.total;
-        } else {
-          soldItemsMap[item.productName] = {
-            'quantity': item.quantity,
-            'total': item.total,
-          };
-        }
+        final matchingCategory = availableCategories.firstWhere(
+          (cat) => cat.label.toLowerCase() == item.productName.toLowerCase(),
+          orElse: () => Category(label: item.productName),
+        );
+
+        // If not already added (non-predefined), initialize
+        soldItemsMap.putIfAbsent(matchingCategory, () => {
+              'quantity': 0,
+              'total': 0.0,
+            });
+
+        soldItemsMap[matchingCategory]!['quantity'] += item.quantity;
+        soldItemsMap[matchingCategory]!['total'] += item.total;
       }
     }
 
@@ -69,7 +85,6 @@ class DateRangeDisplay extends StatelessWidget {
               ),
             ],
           ),
-
           CategoryPieChart(dataMap: calculateCategoryTotals(filteredBills)),
           const SizedBox(height: 20),
           Center(
@@ -145,36 +160,6 @@ class DateRangeDisplay extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget buildReportItem(String title, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(title, style: const TextStyle(fontSize: 16)),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget buildSoldItem(String name, int quantity, double total) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(name),
-          Text('Qty: $quantity'),
-          Text('₹${total.toStringAsFixed(2)}'),
         ],
       ),
     );

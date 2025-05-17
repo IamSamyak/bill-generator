@@ -4,9 +4,13 @@ class GraphDescription extends StatelessWidget {
   const GraphDescription({
     super.key,
     required this.totalRevenue,
+    required this.totalPaidBills,
+    required this.pendingBills,
   });
 
   final double totalRevenue;
+  final int totalPaidBills;
+  final int pendingBills;
 
   static const Color customTextColor = Color(0xFF374151); // Custom font color
 
@@ -26,15 +30,15 @@ class GraphDescription extends StatelessWidget {
             children: [
               Expanded(
                 child: _simpleCard(
-                  title: "Total Bills",
-                  value: "120", // Dummy value
+                  title: "Paid Bills",
+                  value: totalPaidBills.toString(),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: _simpleCard(
-                  title: "Pending",
-                  value: "25", // Dummy value
+                  title: "Unpaid Bills",
+                  value: pendingBills.toString(),
                 ),
               ),
             ],
@@ -62,7 +66,7 @@ class GraphDescription extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: customTextColor, // Apply custom color
+                color: customTextColor,
               ),
             ),
             const SizedBox(height: 8),
@@ -71,7 +75,7 @@ class GraphDescription extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: customTextColor, // Apply custom color
+                color: customTextColor,
               ),
             ),
           ],

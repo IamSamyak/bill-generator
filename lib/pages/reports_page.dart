@@ -10,13 +10,11 @@ class ReportsPage extends StatefulWidget {
   @override
   _ReportsPageState createState() => _ReportsPageState();
 }
-
 class _ReportsPageState extends State<ReportsPage> {
-  final BillService billService =
-      BillService(); // Create an instance of BillService
+  final BillService billService = BillService();
   bool _isLoading = true;
   String? _error;
-  List<Bill> _bills = [];
+  WeeklyBillReport? _report;
 
   @override
   void initState() {
@@ -26,10 +24,9 @@ class _ReportsPageState extends State<ReportsPage> {
 
   Future<void> _fetchBills() async {
     try {
-      final bills =
-          await billService.fetchBills(); // Use BillService to fetch bills
+      final report = await billService.getBillsFromLast7Days();
       setState(() {
-        _bills = bills;
+        _report = report;
         _isLoading = false;
       });
     } catch (e) {
@@ -38,16 +35,6 @@ class _ReportsPageState extends State<ReportsPage> {
         _isLoading = false;
       });
     }
-  }
-
-  Map<String, double> calculateMonthlyRevenue() {
-    Map<String, double> revenue = {};
-    for (var bill in _bills) {
-      DateTime date = bill.date;
-      String month = "${date.year}-${date.month.toString().padLeft(2, '0')}";
-      revenue[month] = (revenue[month] ?? 0) + bill.amount;
-    }
-    return revenue;
   }
 
   @override
@@ -60,11 +47,11 @@ class _ReportsPageState extends State<ReportsPage> {
       return Center(child: Text('Error: $_error'));
     }
 
-    Map<String, double> monthlyRevenue = calculateMonthlyRevenue();
-    double totalRevenue = monthlyRevenue.values.fold(
-      0,
-      (sum, amount) => sum + amount,
-    );
+    // Unwrap the report
+    final weeklyRevenue = _report!.weeklyRevenue;
+    final totalRevenue = _report!.totalRevenue;
+    final totalPaid = _report!.totalPaidBills;
+    final totalPending = _report!.totalPendingBills;
 
     return SingleChildScrollView(
       child: Column(
@@ -73,18 +60,19 @@ class _ReportsPageState extends State<ReportsPage> {
             padding: const EdgeInsets.all(8.0),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
+              children: const [
+                Text(
                   "Revenue",
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
           ),
-          BarChartWidget(monthlyRevenue: monthlyRevenue),
+          BarChartWidget(weeklyRevenue: weeklyRevenue), // you might want to rename this widget or adapt labels for weekly data
           GraphDescription(
             totalRevenue: totalRevenue,
-            // Add other variables here as needed
+            totalPaidBills: totalPaid,
+            pendingBills: totalPending,
           ),
         ],
       ),

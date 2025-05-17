@@ -1,19 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:bill_generator/models/Category.dart';
+import 'package:bill_generator/services/category_service.dart';
 
 class OperateCategories extends StatelessWidget {
-  const OperateCategories({super.key});
+  OperateCategories({super.key});
 
-  final List<_Category> categories = const [
-    _Category(icon: Icons.checkroom, label: 'T-shirt'),
-    _Category(icon: Icons.checkroom, label: 'Jeans'),
-    _Category(icon: Icons.checkroom, label: 'Shirt'),
-    _Category(icon: Icons.checkroom, label: 'NightPant'),
-    _Category(icon: Icons.checkroom, label: 'Innerwear'),
-    _Category(icon: Icons.ac_unit, label: 'Jacket'),
-  ];
+  final CategoryService _categoryService = CategoryService();
 
   @override
   Widget build(BuildContext context) {
+    final List<Category> categories = _categoryService.getCategories();
+
     return SingleChildScrollView(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -28,7 +25,10 @@ class OperateCategories extends StatelessWidget {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1A66BE),
-                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 30,
+                    vertical: 14,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -49,10 +49,12 @@ class OperateCategories extends StatelessWidget {
             // Category cards generated dynamically
             ...categories.map((category) {
               return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 6,
+                ),
                 child: _buildCategoryCard(
-                  icon: category.icon,
-                  label: category.label,
+                  category: category,
                   onEdit: () {
                     // Handle edit for category.label
                   },
@@ -71,8 +73,7 @@ class OperateCategories extends StatelessWidget {
   }
 
   Widget _buildCategoryCard({
-    required IconData icon,
-    required String label,
+    required Category category,
     required VoidCallback onEdit,
     required VoidCallback onDelete,
   }) {
@@ -84,11 +85,11 @@ class OperateCategories extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         child: Row(
           children: [
-            Icon(icon, size: 32),
+            Image.asset(category.imagePath!, width: 32, height: 32),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                label,
+                category.label,
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -102,11 +103,4 @@ class OperateCategories extends StatelessWidget {
       ),
     );
   }
-}
-
-class _Category {
-  final IconData icon;
-  final String label;
-
-  const _Category({required this.icon, required this.label});
 }

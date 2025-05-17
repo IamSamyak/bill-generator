@@ -1,26 +1,36 @@
 import 'package:flutter/material.dart';
+import '../models/Category.dart';
+import '../services/category_service.dart'; // Import your service
 
 class ItemInputRow extends StatefulWidget {
   final TextEditingController productCategoryController;
   final TextEditingController quantityController;
   final TextEditingController priceController;
-  final VoidCallback onRemove; // Callback to trigger remove action
+  final VoidCallback onRemove;
   final bool showRemoveIcon;
 
   const ItemInputRow({
-    Key? key,
+    super.key,
     required this.productCategoryController,
     required this.quantityController,
     required this.priceController,
-    required this.onRemove, // Required in constructor
+    required this.onRemove,
     this.showRemoveIcon = false,
-  }) : super(key: key);
+  });
 
   @override
   _ItemInputRowState createState() => _ItemInputRowState();
 }
 
 class _ItemInputRowState extends State<ItemInputRow> {
+  late final List<Category> categories;
+
+  @override
+  void initState() {
+    super.initState();
+    categories = CategoryService().getCategories();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -33,21 +43,19 @@ class _ItemInputRowState extends State<ItemInputRow> {
               decoration: const InputDecoration(
                 labelText: "Item Type",
                 border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 5,
-                ),
+                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 5),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
-                  value:
-                      widget.productCategoryController.text.isEmpty
-                          ? null
-                          : widget.productCategoryController.text,
-                  items: const [
-                    DropdownMenuItem(value: "Shirt", child: Text("Shirt")),
-                    DropdownMenuItem(value: "Pant", child: Text("Pant")),
-                  ],
+                  value: widget.productCategoryController.text.isEmpty
+                      ? null
+                      : widget.productCategoryController.text,
+                  items: categories.map((category) {
+                    return DropdownMenuItem<String>(
+                      value: category.label,
+                      child: Text(category.label),
+                    );
+                  }).toList(),
                   onChanged: (value) {
                     if (value != null) {
                       setState(() {

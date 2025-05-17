@@ -39,36 +39,100 @@ class BillService {
     }
   }
 
-Future<List<Bill>> searchBillsWithinDateRange({
-  required DateTimeRange dateRange,
-  String payStatusFilter = 'All',
-}) async {
+Future<WeeklyBillReport> getBillsFromLast7Days() async {
   try {
-    // Use Firestore range query on `billDate` field
+    DateTime now = DateTime.now();
+    DateTime sevenDaysAgo = now.subtract(const Duration(days: 6));
+
+    // Create comparable string keys in yyyy-MM-dd format
+    String startKey = DateFormat('yyyy-MM-dd').format(sevenDaysAgo);
+    String endKey = DateFormat('yyyy-MM-dd').format(now);
+
     QuerySnapshot querySnapshot = await _firestore
         .collection('bills')
-        .where('billDate', isGreaterThanOrEqualTo: Timestamp.fromDate(dateRange.start))
-        .where('billDate', isLessThanOrEqualTo: Timestamp.fromDate(
-          dateRange.end.add(const Duration(days: 1)).subtract(const Duration(milliseconds: 1))
-        )) // Inclusive of end date
-        .orderBy('billDate', descending: true)
+        .where('billDate', isGreaterThanOrEqualTo: startKey)
+        .where('billDate', isLessThanOrEqualTo: endKey)
+        .orderBy('billDate') // string comparison works in yyyy-MM-dd
         .get();
 
     List<Bill> bills = [];
 
     for (var doc in querySnapshot.docs) {
       var data = doc.data() as Map<String, dynamic>;
+      bills.add(Bill.fromFirestore(data, doc.id));
+    }
 
-      if (payStatusFilter == 'All' || data['payStatus'] == payStatusFilter) {
-        bills.add(Bill.fromFirestore(data, doc.id));
+    // Initialize last 7 days with 0.0
+    Map<String, double> weeklyRevenue = {};
+    for (int i = 0; i < 7; i++) {
+      DateTime date = now.subtract(Duration(days: i));
+      String key = DateFormat('yyyy-MM-dd').format(date);
+      weeklyRevenue[key] = 0.0;
+    }
+
+    // Sum up revenues by date string
+    for (var bill in bills) {
+      String dateStr = DateFormat('yyyy-MM-dd').format(bill.date); // Ensure same format
+      if (weeklyRevenue.containsKey(dateStr)) {
+        weeklyRevenue[dateStr] = (weeklyRevenue[dateStr] ?? 0) + bill.amount;
       }
     }
 
-    return bills;
+    double totalRevenue = weeklyRevenue.values.fold(0, (sum, value) => sum + value);
+    int totalPaidBills = bills.where((bill) => bill.payStatus == "Paid").length;
+    int totalPendingBills = bills.where((bill) => bill.payStatus == "Unpaid").length;
+
+    return WeeklyBillReport(
+      bills: bills,
+      weeklyRevenue: Map.fromEntries(weeklyRevenue.entries.toList()..sort((a, b) => a.key.compareTo(b.key))),
+      totalRevenue: totalRevenue,
+      totalPaidBills: totalPaidBills,
+      totalPendingBills: totalPendingBills,
+    );
   } catch (e) {
-    throw Exception('Failed to search bills in date range: $e');
+    throw Exception('Failed to fetch bills from last 7 days: $e');
   }
 }
+
+  Future<List<Bill>> searchBillsWithinDateRange({
+    required DateTimeRange dateRange,
+    String payStatusFilter = 'All',
+  }) async {
+    try {
+      // Use Firestore range query on `billDate` field
+      QuerySnapshot querySnapshot =
+          await _firestore
+              .collection('bills')
+              .where(
+                'billDate',
+                isGreaterThanOrEqualTo: Timestamp.fromDate(dateRange.start),
+              )
+              .where(
+                'billDate',
+                isLessThanOrEqualTo: Timestamp.fromDate(
+                  dateRange.end
+                      .add(const Duration(days: 1))
+                      .subtract(const Duration(milliseconds: 1)),
+                ),
+              ) // Inclusive of end date
+              .orderBy('billDate', descending: true)
+              .get();
+
+      List<Bill> bills = [];
+
+      for (var doc in querySnapshot.docs) {
+        var data = doc.data() as Map<String, dynamic>;
+
+        if (payStatusFilter == 'All' || data['payStatus'] == payStatusFilter) {
+          bills.add(Bill.fromFirestore(data, doc.id));
+        }
+      }
+
+      return bills;
+    } catch (e) {
+      throw Exception('Failed to search bills in date range: $e');
+    }
+  }
 
   Future<List<Bill>> searchBillsByReceiptId({required String receiptId}) async {
     try {
@@ -80,7 +144,6 @@ Future<List<Bill>> searchBillsWithinDateRange({
       }
 
       var data = docSnapshot.data() as Map<String, dynamic>;
-      print("data $data");
       return [Bill.fromFirestore(data, docSnapshot.id)];
     } catch (e) {
       throw Exception('Failed to fetch bill by receiptId: $e');
@@ -109,41 +172,6 @@ Future<List<Bill>> searchBillsWithinDateRange({
       throw Exception('Failed to fetch bills by customer name: $e');
     }
   }
-
-  // Future<bool> uploadBillToFirebase(Map<String, dynamic> billData) async {
-  //   try {
-  //     // Convert purchaseList to Firestore-compatible format
-  //     List<Map<String, dynamic>> purchaseList =
-  //         (billData['purchaseList'] ?? []).map<Map<String, dynamic>>((item) {
-  //           return {
-  //             'productCategory': item['productCategory'] ?? '',
-  //             'productName': item['productName'] ?? '',
-  //             'price': item['price'] ?? 0.0,
-  //             'quantity': item['quantity'] ?? 0,
-  //             'total': item['total'] ?? 0.0,
-  //           };
-  //         }).toList();
-
-  //     // Prepare Firestore document data
-  //     Map<String, dynamic> firestoreData = {
-  //       'customerName': billData['customerName'] ?? '',
-  //       'mobileNumber': billData['mobileNumber'] ?? '',
-  //       'billDate': billData['billDate'] ?? '',
-  //       'payStatus': billData['payStatus'] ?? '',
-  //       'paymentMethod': billData['paymentMethod'] ?? '',
-  //       'totalAmount': billData['totalAmount'] ?? 0.0,
-  //       'purchaseList': purchaseList,
-  //     };
-
-  //     // Upload data to Firestore
-  //     await _firestore.collection('bills').add(firestoreData);
-
-  //     return true;
-  //   } catch (e) {
-  //     print("Error uploading bill: $e");
-  //     return false;
-  //   }
-  // }
 
   Future<String> uploadBillToFirebase(Bill bill) async {
     try {

@@ -59,6 +59,20 @@ class Bill {
       'purchaseList': purchaseList.map((p) => p.toMap()).toList(),
     };
   }
+
+  @override
+  String toString() {
+    return 'Bill('
+        'receiptId: $receiptId, '
+        'customerName: $customerName, '
+        'mobileNumber: $mobileNumber, '
+        'date: ${date.toIso8601String()}, '
+        'payStatus: $payStatus, '
+        'paymentMethod: $paymentMethod, '
+        'amount: $amount, '
+        'purchaseList: $purchaseList'
+        ')';
+  }
 }
 
 class PurchaseItem {
@@ -95,4 +109,44 @@ class PurchaseItem {
       'total': total,
     };
   }
+
+  @override
+  String toString() {
+    return 'PurchaseItem('
+        'productCategory: $productCategory, '
+        'productName: $productName, '
+        'price: $price, '
+        'quantity: $quantity, '
+        'total: $total'
+        ')';
+  }
 }
+
+
+class WeeklyBillReport {
+  final List<Bill> bills;
+  final Map<String, double> weeklyRevenue; // e.g. "2025-W20" : 1234.56
+  final double totalRevenue;
+  final int totalPaidBills;
+  final int totalPendingBills;
+
+  WeeklyBillReport({
+    required this.bills,
+    required this.weeklyRevenue,
+    required this.totalRevenue,
+    required this.totalPaidBills,
+    required this.totalPendingBills,
+  });
+
+  @override
+  String toString() {
+    return 'WeeklyBillReport('
+           'totalRevenue: $totalRevenue, '
+           'totalPaidBills: $totalPaidBills, '
+           'totalPendingBills: $totalPendingBills, '
+           'weeklyRevenue: $weeklyRevenue, '
+           'bills: ${bills.map((bill) => bill.toString()).toList()}'
+           ')';
+  }
+}
+

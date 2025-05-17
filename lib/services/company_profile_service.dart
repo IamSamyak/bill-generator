@@ -20,7 +20,6 @@ Future<Map<String, String>?> fetchShopDetails() async {
 
   if (response.statusCode == 200) {
     final decoded = jsonDecode(response.body);
-    print("responsen $decoded");
 
     if (decoded.containsKey('documents') && decoded['documents'] is List && decoded['documents'].isNotEmpty) {
       final document = decoded['documents'][0];  // Assuming you're only fetching one document
@@ -60,11 +59,7 @@ Future<Map<String, String>?> fetchShopDetails() async {
         },
       }),
     );
-
-    print('Status code: ${response.statusCode}');
-print('Response body: ${response.body}');
-
-
+    
     return response.statusCode == 200;
   }
 }
