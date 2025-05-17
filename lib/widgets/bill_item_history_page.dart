@@ -1,7 +1,10 @@
 import 'dart:io';
+import 'package:bill_generator/main.dart';
+import 'package:bill_generator/models/ShopDetail.dart';
 import 'package:bill_generator/pages/pdf_viewer_page.dart';
 import 'package:bill_generator/services/bill_service.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:intl/intl.dart';
@@ -15,18 +18,39 @@ class BillItemWidget extends StatelessWidget {
   BillItemWidget({super.key, required this.bill});
 
   Future<void> _viewPdf(BuildContext context) async {
-    File? generatedPdf = await _billService.generatePdfAndSave(bill, bill.receiptId);
-    if (generatedPdf != null && await generatedPdf.exists()) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => PdfViewerPage(path: generatedPdf.path),
+    ShopDetail? shopDetail =
+        Provider.of<ShopDetailProvider>(context, listen: false).shopDetail;
+
+    if (shopDetail == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("❗ Shop details missing! Cannot generate PDF."),
         ),
       );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("❌ Failed to store bill")),
+      return;
+    }
+    File? generatedPdf = await _billService.generatePdfAndSave(
+      bill,
+      bill.receiptId,
+      shopDetail,
+    );
+    if (generatedPdf != null && await generatedPdf!.exists()) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder:
+            (context) => Dialog(
+              insetPadding: EdgeInsets.all(16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: PdfViewerDialogContent(path: generatedPdf!.path),
+            ),
       );
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("❌ Failed to store bill")));
     }
   }
 
@@ -93,10 +117,7 @@ class BillItemWidget extends StatelessWidget {
                   ),
                   Text(
                     'Bill Date: ${DateFormat('yyyy-MM-dd').format(bill.date)}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[700],
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[700]),
                   ),
                 ],
               ),
@@ -115,7 +136,10 @@ class BillItemWidget extends StatelessWidget {
                 GestureDetector(
                   onTap: () => _viewPdf(context),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.blue.shade100,
                       borderRadius: BorderRadius.circular(5),

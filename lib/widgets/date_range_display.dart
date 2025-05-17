@@ -27,9 +27,10 @@ class DateRangeDisplay extends StatelessWidget {
       (sum, bill) => sum + bill.amount,
     );
 
-    final billsPaid = filteredBills
-        .where((bill) => bill.payStatus.toLowerCase() == 'paid')
-        .length;
+    final billsPaid =
+        filteredBills
+            .where((bill) => bill.payStatus.toLowerCase() == 'paid')
+            .length;
 
     final unpaidBills = filteredBills.length - billsPaid;
 
@@ -52,10 +53,10 @@ class DateRangeDisplay extends StatelessWidget {
         );
 
         // If not already added (non-predefined), initialize
-        soldItemsMap.putIfAbsent(matchingCategory, () => {
-              'quantity': 0,
-              'total': 0.0,
-            });
+        soldItemsMap.putIfAbsent(
+          matchingCategory,
+          () => {'quantity': 0, 'total': 0.0},
+        );
 
         soldItemsMap[matchingCategory]!['quantity'] += item.quantity;
         soldItemsMap[matchingCategory]!['total'] += item.total;
@@ -85,7 +86,10 @@ class DateRangeDisplay extends StatelessWidget {
               ),
             ],
           ),
-          CategoryPieChart(dataMap: calculateCategoryTotals(filteredBills)),
+          CategoryPieChart(
+            dataMap: calculateCategoryTotals(filteredBills),
+            allCategories: availableCategories,
+          ),
           const SizedBox(height: 20),
           Center(
             child: OutlinedButton(

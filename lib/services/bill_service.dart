@@ -1,6 +1,6 @@
 import 'package:bill_generator/models/Bill.dart';
+import 'package:bill_generator/models/ShopDetail.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
@@ -10,19 +10,31 @@ import 'company_profile_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class BillService {
-  final String projectId = dotenv.env['PROJECT_ID'] ?? '';
-  final String apiKey = dotenv.env['FIREBASE_API_KEY'] ?? '';
   final CompanyProfileService _service = CompanyProfileService();
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  DocumentSnapshot? lastDocument;
 
-  Future<List<Bill>> fetchBills({String payStatusFilter = 'All'}) async {
+  Future<List<Bill>> fetchBills({
+    String payStatusFilter = 'All',
+    int limit = 20,
+    DocumentSnapshot? lastDocument,
+  }) async {
     try {
-      QuerySnapshot querySnapshot =
-          await _firestore
-              .collection('bills')
-              .orderBy('billDate', descending: true)
-              .get();
+      Query query = _firestore
+          .collection('bills')
+          .orderBy('billDate', descending: true)
+          .limit(limit);
+
+      if (lastDocument != null) {
+        query = query.startAfterDocument(lastDocument);
+      }
+
+      QuerySnapshot querySnapshot = await query.get();
+
+      // Update the last document snapshot for pagination
+      this.lastDocument =
+          querySnapshot.docs.isNotEmpty ? querySnapshot.docs.last : null;
 
       List<Bill> bills = [];
 
@@ -39,82 +51,104 @@ class BillService {
     }
   }
 
-Future<WeeklyBillReport> getBillsFromLast7Days() async {
-  try {
-    DateTime now = DateTime.now();
-    DateTime sevenDaysAgo = now.subtract(const Duration(days: 6));
+  Future<WeeklyBillReport> getBillsFromLast7Days() async {
+    try {
+      DateTime now = DateTime.now();
+      DateTime sevenDaysAgo = now.subtract(const Duration(days: 6));
 
-    // Create comparable string keys in yyyy-MM-dd format
-    String startKey = DateFormat('yyyy-MM-dd').format(sevenDaysAgo);
-    String endKey = DateFormat('yyyy-MM-dd').format(now);
+      // Use Timestamp for querying dates
+      Timestamp startTimestamp = Timestamp.fromDate(
+        DateTime(sevenDaysAgo.year, sevenDaysAgo.month, sevenDaysAgo.day),
+      );
+      Timestamp endTimestamp = Timestamp.fromDate(
+        DateTime(now.year, now.month, now.day, 23, 59, 59, 999),
+      );
 
-    QuerySnapshot querySnapshot = await _firestore
-        .collection('bills')
-        .where('billDate', isGreaterThanOrEqualTo: startKey)
-        .where('billDate', isLessThanOrEqualTo: endKey)
-        .orderBy('billDate') // string comparison works in yyyy-MM-dd
-        .get();
+      QuerySnapshot querySnapshot =
+          await _firestore
+              .collection('bills')
+              .where('billDate', isGreaterThanOrEqualTo: startTimestamp)
+              .where('billDate', isLessThanOrEqualTo: endTimestamp)
+              .orderBy('billDate')
+              .get();
 
-    List<Bill> bills = [];
+      List<Bill> bills = [];
 
-    for (var doc in querySnapshot.docs) {
-      var data = doc.data() as Map<String, dynamic>;
-      bills.add(Bill.fromFirestore(data, doc.id));
-    }
-
-    // Initialize last 7 days with 0.0
-    Map<String, double> weeklyRevenue = {};
-    for (int i = 0; i < 7; i++) {
-      DateTime date = now.subtract(Duration(days: i));
-      String key = DateFormat('yyyy-MM-dd').format(date);
-      weeklyRevenue[key] = 0.0;
-    }
-
-    // Sum up revenues by date string
-    for (var bill in bills) {
-      String dateStr = DateFormat('yyyy-MM-dd').format(bill.date); // Ensure same format
-      if (weeklyRevenue.containsKey(dateStr)) {
-        weeklyRevenue[dateStr] = (weeklyRevenue[dateStr] ?? 0) + bill.amount;
+      for (var doc in querySnapshot.docs) {
+        var data = doc.data() as Map<String, dynamic>;
+        bills.add(Bill.fromFirestore(data, doc.id));
       }
+
+      // Initialize last 7 days with 0.0
+      Map<String, double> weeklyRevenue = {};
+      for (int i = 0; i < 7; i++) {
+        DateTime date = now.subtract(Duration(days: i));
+        String key = DateFormat('yyyy-MM-dd').format(date);
+        weeklyRevenue[key] = 0.0;
+      }
+
+      // Sum up revenues by date string
+      for (var bill in bills) {
+        String dateStr = DateFormat('yyyy-MM-dd').format(bill.date);
+        if (weeklyRevenue.containsKey(dateStr)) {
+          weeklyRevenue[dateStr] = (weeklyRevenue[dateStr] ?? 0) + bill.amount;
+        }
+      }
+
+      double totalRevenue = weeklyRevenue.values.fold(
+        0,
+        (sum, value) => sum + value,
+      );
+      int totalPaidBills =
+          bills.where((bill) => bill.payStatus == "Paid").length;
+      int totalPendingBills =
+          bills.where((bill) => bill.payStatus == "Unpaid").length;
+
+      return WeeklyBillReport(
+        bills: bills,
+        weeklyRevenue: Map.fromEntries(
+          weeklyRevenue.entries.toList()
+            ..sort((a, b) => a.key.compareTo(b.key)),
+        ),
+        totalRevenue: totalRevenue,
+        totalPaidBills: totalPaidBills,
+        totalPendingBills: totalPendingBills,
+      );
+    } catch (e) {
+      throw Exception('Failed to fetch bills from last 7 days: $e');
     }
-
-    double totalRevenue = weeklyRevenue.values.fold(0, (sum, value) => sum + value);
-    int totalPaidBills = bills.where((bill) => bill.payStatus == "Paid").length;
-    int totalPendingBills = bills.where((bill) => bill.payStatus == "Unpaid").length;
-
-    return WeeklyBillReport(
-      bills: bills,
-      weeklyRevenue: Map.fromEntries(weeklyRevenue.entries.toList()..sort((a, b) => a.key.compareTo(b.key))),
-      totalRevenue: totalRevenue,
-      totalPaidBills: totalPaidBills,
-      totalPendingBills: totalPendingBills,
-    );
-  } catch (e) {
-    throw Exception('Failed to fetch bills from last 7 days: $e');
   }
-}
 
   Future<List<Bill>> searchBillsWithinDateRange({
     required DateTimeRange dateRange,
     String payStatusFilter = 'All',
   }) async {
     try {
-      // Use Firestore range query on `billDate` field
+      // Convert the date range to Timestamps for querying Firestore
+      Timestamp startTimestamp = Timestamp.fromDate(
+        DateTime(
+          dateRange.start.year,
+          dateRange.start.month,
+          dateRange.start.day,
+        ),
+      );
+      Timestamp endTimestamp = Timestamp.fromDate(
+        DateTime(
+          dateRange.end.year,
+          dateRange.end.month,
+          dateRange.end.day,
+          23,
+          59,
+          59,
+          999,
+        ),
+      );
+
       QuerySnapshot querySnapshot =
           await _firestore
               .collection('bills')
-              .where(
-                'billDate',
-                isGreaterThanOrEqualTo: Timestamp.fromDate(dateRange.start),
-              )
-              .where(
-                'billDate',
-                isLessThanOrEqualTo: Timestamp.fromDate(
-                  dateRange.end
-                      .add(const Duration(days: 1))
-                      .subtract(const Duration(milliseconds: 1)),
-                ),
-              ) // Inclusive of end date
+              .where('billDate', isGreaterThanOrEqualTo: startTimestamp)
+              .where('billDate', isLessThanOrEqualTo: endTimestamp)
               .orderBy('billDate', descending: true)
               .get();
 
@@ -175,7 +209,7 @@ Future<WeeklyBillReport> getBillsFromLast7Days() async {
 
   Future<String> uploadBillToFirebase(Bill bill) async {
     try {
-      // Step 1: Generate receipt ID with daily counter
+      // Step 1: Generate a unique receipt ID with daily counter
       String receiptId = await _generateReceiptId();
 
       // Step 2: Prepare Firestore document data from Bill instance
@@ -183,16 +217,17 @@ Future<WeeklyBillReport> getBillsFromLast7Days() async {
         'receiptId': receiptId,
         'customerName': bill.customerName,
         'mobileNumber': bill.mobileNumber,
-        'billDate':
-            bill.date, // assuming formatted string, consider storing ISO string if needed
+        'billDate': Timestamp.fromDate(
+          bill.date,
+        ), // Store as Firestore Timestamp
         'payStatus': bill.payStatus,
         'paymentMethod': bill.paymentMethod,
         'totalAmount': bill.amount,
         'purchaseList': bill.purchaseList.map((item) => item.toMap()).toList(),
-        'timestamp': FieldValue.serverTimestamp(), // Optional
+        'timestamp': FieldValue.serverTimestamp(), // Optional created time
       };
 
-      // Step 3: Upload data to Firestore
+      // Step 3: Upload data to Firestore under 'bills' collection with doc ID = receiptId
       await _firestore.collection('bills').doc(receiptId).set(firestoreData);
 
       return receiptId;
@@ -210,6 +245,7 @@ Future<WeeklyBillReport> getBillsFromLast7Days() async {
 
     final counterRef = _firestore.collection('counters').doc(docId);
 
+    // Use a transaction to atomically increment the counter
     final newCount = await _firestore.runTransaction((transaction) async {
       final snapshot = await transaction.get(counterRef);
 
@@ -222,9 +258,11 @@ Future<WeeklyBillReport> getBillsFromLast7Days() async {
       transaction.set(counterRef, {
         'count': updatedCount,
       }, SetOptions(merge: true));
+
       return updatedCount;
     });
 
+    // Format receipt ID: datePart + 4-digit zero-padded count
     final receiptId = "$datePart${newCount.toString().padLeft(4, '0')}";
     return receiptId;
   }
@@ -256,21 +294,22 @@ Future<WeeklyBillReport> getBillsFromLast7Days() async {
     }
   }
 
-  Future<File?> generatePdfAndSave(Bill bill, String receiptId) async {
+  Future<File?> generatePdfAndSave(
+    Bill bill,
+    String receiptId,
+    ShopDetail shopDetail, // Pass shop details directly
+  ) async {
     final pdf = pw.Document();
 
     final DateTime now = DateTime.now();
     final String billDate = DateFormat('yyyy-MM-dd').format(bill.date);
     final String billTime = DateFormat('hh:mm a').format(now);
 
-    final shopDetails = await _service.fetchShopDetails();
-    final String shopName = shopDetails?['shopName'] ?? "Shop Name";
-    final String shopAddress = shopDetails?['address'] ?? "Address";
-    final String shopMobile = shopDetails?['mobileNumber'] ?? "Phone";
+    final String shopName = shopDetail.shopName;
+    final String shopAddress = shopDetail.address;
+    final String shopMobile = shopDetail.mobileNumber;
 
-    // Calculate discount as 10% of amount
     final double discount = bill.amount * 0.10;
-    // Calculate net amount
     final double netAmount = bill.amount - discount;
 
     final styleNormal = pw.TextStyle(fontSize: 8);
@@ -313,7 +352,6 @@ Future<WeeklyBillReport> getBillsFromLast7Days() async {
                 pw.SizedBox(height: 6),
                 pw.Center(child: pw.Text("RECEIPT", style: styleHeading)),
                 pw.SizedBox(height: 4),
-
                 pw.Row(
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   children: [
@@ -327,7 +365,7 @@ Future<WeeklyBillReport> getBillsFromLast7Days() async {
                 ),
                 pw.SizedBox(height: 6),
 
-                // ==== Table Header ====
+                // === Table Header ===
                 pw.Table(
                   border: pw.TableBorder(
                     top: pw.BorderSide(width: 0.5, color: PdfColors.black),
@@ -375,7 +413,7 @@ Future<WeeklyBillReport> getBillsFromLast7Days() async {
                   ],
                 ),
 
-                // ==== Item Rows ====
+                // === Item Rows ===
                 pw.Table(
                   columnWidths: {
                     0: pw.FlexColumnWidth(2),
@@ -430,7 +468,7 @@ Future<WeeklyBillReport> getBillsFromLast7Days() async {
 
                 pw.SizedBox(height: 6),
 
-                // ==== Summary Table ====
+                // === Summary Table ===
                 pw.Table(
                   border: pw.TableBorder(
                     top: pw.BorderSide(width: 0.5, color: PdfColors.black),
@@ -475,7 +513,7 @@ Future<WeeklyBillReport> getBillsFromLast7Days() async {
                   ],
                 ),
 
-                // ==== Total ====
+                // === Total ===
                 pw.Table(
                   border: pw.TableBorder(
                     top: pw.BorderSide(width: 0.5, color: PdfColors.black),
@@ -506,16 +544,13 @@ Future<WeeklyBillReport> getBillsFromLast7Days() async {
                 ),
 
                 pw.SizedBox(height: 10),
-
                 pw.Center(
                   child: pw.Text(
                     "THANK YOU FOR SHOPPING!",
                     style: styleHeading,
                   ),
                 ),
-
                 pw.SizedBox(height: 6),
-                // QR Code for receiptId
                 pw.Center(
                   child: pw.BarcodeWidget(
                     barcode: pw.Barcode.qrCode(),
@@ -544,278 +579,4 @@ Future<WeeklyBillReport> getBillsFromLast7Days() async {
       return null;
     }
   }
-
-  // Future<File?> generatePdfAndSave(Bill bill, String receiptId) async {
-  //   final pdf = pw.Document();
-
-  //   final DateTime now = DateTime.now();
-  //   final String billDate = DateFormat('yyyy-MM-dd').format(bill.date);
-  //   final String billTime = DateFormat('hh:mm a').format(now);
-
-  //   final shopDetails = await _service.fetchShopDetails();
-  //   final String shopName = shopDetails?['shopName'] ?? "Shop Name";
-  //   final String shopAddress = shopDetails?['address'] ?? "Address";
-  //   final String shopMobile = shopDetails?['mobileNumber'] ?? "Phone";
-
-  //   // Calculate discount as 10% of amount
-  //   final double discount = bill.amount * 0.10;
-  //   // Calculate net amount
-  //   final double netAmount = bill.amount - discount;
-
-  //   final styleNormal = pw.TextStyle(fontSize: 8);
-  //   final styleBold = pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold);
-  //   final styleTitle = pw.TextStyle(
-  //     fontSize: 16,
-  //     fontWeight: pw.FontWeight.bold,
-  //   );
-  //   final styleHeading = pw.TextStyle(
-  //     fontSize: 10,
-  //     fontWeight: pw.FontWeight.bold,
-  //   );
-  //   final styleTotal = pw.TextStyle(
-  //     fontSize: 9,
-  //     fontWeight: pw.FontWeight.bold,
-  //   );
-
-  //   pdf.addPage(
-  //     pw.Page(
-  //       pageFormat: PdfPageFormat(80 * PdfPageFormat.mm, 90 * PdfPageFormat.mm),
-  //       build: (pw.Context context) {
-  //         return pw.Padding(
-  //           padding: pw.EdgeInsets.symmetric(horizontal: 5),
-  //           child: pw.Column(
-  //             crossAxisAlignment: pw.CrossAxisAlignment.start,
-  //             children: [
-  //               pw.SizedBox(height: 10),
-  //               pw.Center(child: pw.Text(shopName, style: styleTitle)),
-  //               pw.SizedBox(height: 4),
-  //               pw.Center(
-  //                 child: pw.Text(
-  //                   "$shopAddress\nPhone: $shopMobile",
-  //                   textAlign: pw.TextAlign.center,
-  //                   style: styleNormal,
-  //                 ),
-  //               ),
-  //               pw.SizedBox(height: 6),
-  //               pw.Center(child: pw.Text("RECEIPT", style: styleHeading)),
-  //               pw.SizedBox(height: 4),
-
-  //               pw.Row(
-  //                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-  //                 children: [
-  //                   pw.Text("Receipt #: $receiptId", style: styleNormal),
-  //                   pw.Text("Bill Date: $billDate", style: styleNormal),
-  //                 ],
-  //               ),
-  //               pw.SizedBox(height: 2),
-  //               pw.Center(
-  //                 child: pw.Text("Bill Time: $billTime", style: styleNormal),
-  //               ),
-  //               pw.SizedBox(height: 6),
-
-  //               // ==== Table Header ====
-  //               pw.Table(
-  //                 border: pw.TableBorder(
-  //                   top: pw.BorderSide(width: 0.5, color: PdfColors.black),
-  //                   bottom: pw.BorderSide(width: 0.5, color: PdfColors.black),
-  //                 ),
-  //                 columnWidths: {
-  //                   0: pw.FlexColumnWidth(2),
-  //                   1: pw.FlexColumnWidth(1),
-  //                   2: pw.FlexColumnWidth(1),
-  //                   3: pw.FlexColumnWidth(1),
-  //                 },
-  //                 children: [
-  //                   pw.TableRow(
-  //                     children: [
-  //                       pw.Padding(
-  //                         padding: pw.EdgeInsets.all(4),
-  //                         child: pw.Text('DESCRIPTION', style: styleBold),
-  //                       ),
-  //                       pw.Padding(
-  //                         padding: pw.EdgeInsets.all(4),
-  //                         child: pw.Text(
-  //                           'QTY',
-  //                           style: styleBold,
-  //                           textAlign: pw.TextAlign.center,
-  //                         ),
-  //                       ),
-  //                       pw.Padding(
-  //                         padding: pw.EdgeInsets.all(4),
-  //                         child: pw.Text(
-  //                           'PRICE',
-  //                           style: styleBold,
-  //                           textAlign: pw.TextAlign.right,
-  //                         ),
-  //                       ),
-  //                       pw.Padding(
-  //                         padding: pw.EdgeInsets.all(4),
-  //                         child: pw.Text(
-  //                           'TOTAL',
-  //                           style: styleBold,
-  //                           textAlign: pw.TextAlign.right,
-  //                         ),
-  //                       ),
-  //                     ],
-  //                   ),
-  //                 ],
-  //               ),
-
-  //               // ==== Item Rows ====
-  //               pw.Table(
-  //                 columnWidths: {
-  //                   0: pw.FlexColumnWidth(2),
-  //                   1: pw.FlexColumnWidth(1),
-  //                   2: pw.FlexColumnWidth(1),
-  //                   3: pw.FlexColumnWidth(1),
-  //                 },
-  //                 children: [
-  //                   ...bill.purchaseList.map<pw.TableRow>((item) {
-  //                     double price = item.price;
-  //                     int qty = item.quantity;
-  //                     double total = price * qty;
-
-  //                     return pw.TableRow(
-  //                       children: [
-  //                         pw.Padding(
-  //                           padding: pw.EdgeInsets.all(4),
-  //                           child: pw.Text(
-  //                             item.productCategory,
-  //                             style: styleNormal,
-  //                           ),
-  //                         ),
-  //                         pw.Padding(
-  //                           padding: pw.EdgeInsets.all(4),
-  //                           child: pw.Text(
-  //                             qty.toString(),
-  //                             style: styleNormal,
-  //                             textAlign: pw.TextAlign.center,
-  //                           ),
-  //                         ),
-  //                         pw.Padding(
-  //                           padding: pw.EdgeInsets.all(4),
-  //                           child: pw.Text(
-  //                             price.toStringAsFixed(2),
-  //                             style: styleNormal,
-  //                             textAlign: pw.TextAlign.right,
-  //                           ),
-  //                         ),
-  //                         pw.Padding(
-  //                           padding: pw.EdgeInsets.all(4),
-  //                           child: pw.Text(
-  //                             total.toStringAsFixed(2),
-  //                             style: styleNormal,
-  //                             textAlign: pw.TextAlign.right,
-  //                           ),
-  //                         ),
-  //                       ],
-  //                     );
-  //                   }).toList(),
-  //                 ],
-  //               ),
-
-  //               pw.SizedBox(height: 6),
-
-  //               // ==== Summary Table ====
-  //               pw.Table(
-  //                 border: pw.TableBorder(
-  //                   top: pw.BorderSide(width: 0.5, color: PdfColors.black),
-  //                 ),
-  //                 columnWidths: {
-  //                   0: pw.FlexColumnWidth(2),
-  //                   1: pw.FlexColumnWidth(2),
-  //                 },
-  //                 children: [
-  //                   pw.TableRow(
-  //                     children: [
-  //                       pw.Padding(
-  //                         padding: pw.EdgeInsets.all(4),
-  //                         child: pw.Text('Subtotal', style: styleNormal),
-  //                       ),
-  //                       pw.Padding(
-  //                         padding: pw.EdgeInsets.all(4),
-  //                         child: pw.Text(
-  //                           bill.amount.toStringAsFixed(2),
-  //                           style: styleNormal,
-  //                           textAlign: pw.TextAlign.right,
-  //                         ),
-  //                       ),
-  //                     ],
-  //                   ),
-  //                   pw.TableRow(
-  //                     children: [
-  //                       pw.Padding(
-  //                         padding: pw.EdgeInsets.all(4),
-  //                         child: pw.Text('Discount (10%)', style: styleNormal),
-  //                       ),
-  //                       pw.Padding(
-  //                         padding: pw.EdgeInsets.all(4),
-  //                         child: pw.Text(
-  //                           discount.toStringAsFixed(2),
-  //                           style: styleNormal,
-  //                           textAlign: pw.TextAlign.right,
-  //                         ),
-  //                       ),
-  //                     ],
-  //                   ),
-  //                 ],
-  //               ),
-
-  //               // ==== Total ====
-  //               pw.Table(
-  //                 border: pw.TableBorder(
-  //                   top: pw.BorderSide(width: 0.5, color: PdfColors.black),
-  //                   bottom: pw.BorderSide(width: 0.5, color: PdfColors.black),
-  //                 ),
-  //                 columnWidths: {
-  //                   0: pw.FlexColumnWidth(2),
-  //                   1: pw.FlexColumnWidth(2),
-  //                 },
-  //                 children: [
-  //                   pw.TableRow(
-  //                     children: [
-  //                       pw.Padding(
-  //                         padding: pw.EdgeInsets.all(4),
-  //                         child: pw.Text('Total', style: styleTotal),
-  //                       ),
-  //                       pw.Padding(
-  //                         padding: pw.EdgeInsets.all(4),
-  //                         child: pw.Text(
-  //                           netAmount.toStringAsFixed(2),
-  //                           style: styleTotal,
-  //                           textAlign: pw.TextAlign.right,
-  //                         ),
-  //                       ),
-  //                     ],
-  //                   ),
-  //                 ],
-  //               ),
-
-  //               pw.SizedBox(height: 10),
-  //               pw.Center(
-  //                 child: pw.Text(
-  //                   "THANK YOU FOR SHOPPING!",
-  //                   style: styleHeading,
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //         );
-  //       },
-  //     ),
-  //   );
-
-  //   try {
-  //     final dir = await getExternalStorageDirectory();
-  //     if (dir == null) return null;
-  //     final filePath =
-  //         '${dir.path}/bill_${DateTime.now().millisecondsSinceEpoch}.pdf';
-  //     final file = File(filePath);
-  //     await file.writeAsBytes(await pdf.save());
-  //     return file;
-  //   } catch (e) {
-  //     print("❌ Error saving PDF: $e");
-  //     return null;
-  //   }
-  // }
 }

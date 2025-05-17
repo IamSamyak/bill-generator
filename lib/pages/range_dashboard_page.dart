@@ -4,7 +4,7 @@ import 'package:bill_generator/services/bill_service.dart';
 import '../widgets/date_range_display.dart';
 
 class DateRangeSelectionWidget extends StatefulWidget {
-  const DateRangeSelectionWidget({Key? key}) : super(key: key);
+  const DateRangeSelectionWidget({super.key});
 
   @override
   State<DateRangeSelectionWidget> createState() =>

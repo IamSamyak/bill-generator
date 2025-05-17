@@ -1,4 +1,4 @@
-import 'dart:convert';
+import 'package:bill_generator/models/ShopDetail.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
@@ -22,11 +22,13 @@ class _CompanyProfilePageState extends State<CompanyProfilePage> {
       'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
   late CompanyProfileService _service;
 
-  // Store existing fetched values
-  String _existingshopName = 'John Doe';
-  String _existingMobileNumber = '+91 9876543210';
-  String _existingAddress = '123, Blue Street, Flutter City, Wonderland';
-  String _existingLogoUrl = '';
+  // Store existing fetched ShopDetail object
+  ShopDetail _existingDetails = ShopDetail(
+    shopName: 'John Doe',
+    mobileNumber: '+91 9876543210',
+    address: '123, Blue Street, Flutter City, Wonderland',
+    logo: '',
+  );
 
   @override
   void initState() {
@@ -37,55 +39,80 @@ class _CompanyProfilePageState extends State<CompanyProfilePage> {
   }
 
   Future<void> _fetchShopDetails() async {
-    final data = await _service.fetchShopDetails();
+    final ShopDetail? shopDetail = await _service.fetchShopDetails();
 
-    setState(() {
-      _shopNameController.text = data?['shopName'] ?? _existingshopName;
-      _mobileNumberController.text =
-          data?['mobileNumber'] ?? _existingMobileNumber;
-      _addressController.text = data?['address'] ?? _existingAddress;
+    if (shopDetail != null) {
+      setState(() {
+        _shopNameController.text =
+            shopDetail.shopName.isNotEmpty
+                ? shopDetail.shopName
+                : _existingDetails.shopName;
+        _mobileNumberController.text =
+            shopDetail.mobileNumber.isNotEmpty
+                ? shopDetail.mobileNumber
+                : _existingDetails.mobileNumber;
+        _addressController.text =
+            shopDetail.address.isNotEmpty
+                ? shopDetail.address
+                : _existingDetails.address;
 
-      _existingshopName = _shopNameController.text;
-      _existingMobileNumber = _mobileNumberController.text;
-      _existingAddress = _addressController.text;
-      _existingLogoUrl = data?['logo'] ?? defaultLogoUrl;
-    });
+        _existingDetails = ShopDetail(
+          shopName: _shopNameController.text,
+          mobileNumber: _mobileNumberController.text,
+          address: _addressController.text,
+          logo: shopDetail.logo.isNotEmpty ? shopDetail.logo : defaultLogoUrl,
+        );
+      });
+    } else {
+      setState(() {
+        // Use default if fetch returns null
+        _shopNameController.text = _existingDetails.shopName;
+        _mobileNumberController.text = _existingDetails.mobileNumber;
+        _addressController.text = _existingDetails.address;
+        _existingDetails = ShopDetail(
+          shopName: _existingDetails.shopName,
+          mobileNumber: _existingDetails.mobileNumber,
+          address: _existingDetails.address,
+          logo: defaultLogoUrl,
+        );
+      });
+    }
   }
 
   Future<void> _uploadShopDetails() async {
     final shopName =
         _shopNameController.text.trim().isNotEmpty
             ? _shopNameController.text.trim()
-            : _existingshopName;
+            : _existingDetails.shopName;
     final mobileNumber =
         _mobileNumberController.text.trim().isNotEmpty
             ? _mobileNumberController.text.trim()
-            : _existingMobileNumber;
+            : _existingDetails.mobileNumber;
     final address =
         _addressController.text.trim().isNotEmpty
             ? _addressController.text.trim()
-            : _existingAddress;
+            : _existingDetails.address;
     final logoUrl =
         _pickedImage != null
             ? 'gs://your-bucket-name/${_pickedImage!.path.split('/').last}'
-            : _existingLogoUrl.isNotEmpty
-            ? _existingLogoUrl
-            : defaultLogoUrl;
-            
-    final success = await _service.uploadShopDetails(
+            : (_existingDetails.logo.isNotEmpty
+                ? _existingDetails.logo
+                : defaultLogoUrl);
+
+    final updatedDetails = ShopDetail(
       shopName: shopName,
       mobileNumber: mobileNumber,
       address: address,
-      logoUrl: logoUrl,
+      logo: logoUrl,
+    );
+
+    final success = await _service.uploadShopDetails(
+      shopDetail: updatedDetails,
     );
 
     if (success) {
-      // Update existing values after upload
       setState(() {
-        _existingshopName = shopName;
-        _existingMobileNumber = mobileNumber;
-        _existingAddress = address;
-        _existingLogoUrl = logoUrl;
+        _existingDetails = updatedDetails;
       });
     }
 
@@ -134,8 +161,8 @@ class _CompanyProfilePageState extends State<CompanyProfilePage> {
                               _pickedImage != null
                                   ? FileImage(_pickedImage!)
                                   : NetworkImage(
-                                        _existingLogoUrl.isNotEmpty
-                                            ? _existingLogoUrl
+                                        _existingDetails.logo.isNotEmpty
+                                            ? _existingDetails.logo
                                             : defaultLogoUrl,
                                       )
                                       as ImageProvider,
@@ -196,10 +223,8 @@ class _CompanyProfilePageState extends State<CompanyProfilePage> {
             ElevatedButton(
               onPressed: _uploadShopDetails,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(
-                  0xFF1864c3,
-                ), // Same blue as Generate Bill
-                minimumSize: const Size.fromHeight(48), // Same height (48)
+                backgroundColor: const Color(0xFF1864c3),
+                minimumSize: const Size.fromHeight(48),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),

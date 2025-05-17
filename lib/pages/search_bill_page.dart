@@ -197,10 +197,6 @@ class _SearchBillPageState extends State<SearchBillPage> {
                   itemCount: bills.length,
                   itemBuilder: (context, index) {
                     final bill = bills[index];
-                    Color statusColor =
-                        bill.payStatus.toLowerCase() == 'paid'
-                            ? Colors.green
-                            : Colors.red;
 
                     return GestureDetector(
                       onTap: () {

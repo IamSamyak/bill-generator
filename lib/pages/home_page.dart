@@ -5,8 +5,13 @@ const Color kMainColor = Color(0xFF1864BF);
 
 class HomePage extends StatelessWidget {
   final Function(String) onNavigate;
+  final String shopName; // Add this line to accept shopName
 
-  const HomePage({super.key, required this.onNavigate});
+  const HomePage({
+    super.key,
+    required this.onNavigate,
+    required this.shopName,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -14,12 +19,12 @@ class HomePage extends StatelessWidget {
       padding: const EdgeInsets.symmetric(
         horizontal: 8.0,
         vertical: 24,
-      ), // Existing padding
+      ),
       child: Align(
-        alignment: Alignment.topCenter, // Align horizontally centered at top
+        alignment: Alignment.topCenter,
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center, // Horizontal centering
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Center(
               child: Transform.translate(
@@ -27,8 +32,7 @@ class HomePage extends StatelessWidget {
                 child: ClipRect(
                   child: Align(
                     alignment: Alignment.topCenter,
-                    heightFactor:
-                        0.8, // Adjust this value to crop more or less from bottom
+                    heightFactor: 0.8,
                     child: Image.asset(
                       'assets/images/HomeScreenDoodle.png',
                       height: 360,
@@ -38,9 +42,9 @@ class HomePage extends StatelessWidget {
                 ),
               ),
             ),
-            const Text(
-              "Akash Men's Wear",
-              style: TextStyle(
+            Text(
+              shopName, // Use the dynamic shopName
+              style: const TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.bold,
                 color: Color(0xFF184373),

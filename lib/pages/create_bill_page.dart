@@ -1,9 +1,12 @@
 import 'dart:io';
+import 'package:bill_generator/main.dart';
+import 'package:bill_generator/models/ShopDetail.dart';
 import 'package:bill_generator/widgets/bill_action_buttons.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:whatsapp_share/whatsapp_share.dart';
 import '../widgets/order_summary.dart';
-import '../widgets/CustomerInputForm.dart';
+import '../widgets/customer_input_form.dart';
 import '../widgets/item_input_row.dart';
 import '../services/bill_service.dart';
 import 'pdf_viewer_page.dart';
@@ -116,7 +119,8 @@ class _CreateBillPageState extends State<CreateBillPage> {
           validItems.add(
             PurchaseItem(
               productCategory: type,
-              productName: type, // or update if you have a different productName
+              productName:
+                  type, // or update if you have a different productName
               quantity: qty,
               price: price,
               total: qty * price,
@@ -150,11 +154,26 @@ class _CreateBillPageState extends State<CreateBillPage> {
     );
 
     String receiptId = await _billService.uploadBillToFirebase(bill);
+    ShopDetail? shopDetail =
+        Provider.of<ShopDetailProvider>(context, listen: false).shopDetail;
+    if (shopDetail == null) {
+      // Handle the error case when shopDetail is not set
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("❗ Shop details are missing! Cannot generate bill."),
+        ),
+      );
+      return false;
+    }
     setState(() {
       _billUploadSuccess = (receiptId != "");
       _receiptIdForBill = receiptId;
     });
-    generatedPdf = await _billService.generatePdfAndSave(bill, _receiptIdForBill);
+    generatedPdf = await _billService.generatePdfAndSave(
+      bill,
+      _receiptIdForBill,
+      shopDetail
+    );
     return (receiptId != "");
   }
 
@@ -165,11 +184,17 @@ class _CreateBillPageState extends State<CreateBillPage> {
     }
     if (_billUploadSuccess) {
       if (generatedPdf != null && await generatedPdf!.exists()) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => PdfViewerPage(path: generatedPdf!.path),
-          ),
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder:
+              (context) => Dialog(
+                insetPadding: EdgeInsets.all(16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: PdfViewerDialogContent(path: generatedPdf!.path),
+              ),
         );
       }
     } else {
@@ -200,12 +225,13 @@ class _CreateBillPageState extends State<CreateBillPage> {
 
   @override
   Widget build(BuildContext context) {
-    final items = itemControllers.map((c) {
-      return {
-        "price": double.tryParse(c["price"]!.text) ?? 0,
-        "quantity": int.tryParse(c["quantity"]!.text) ?? 0,
-      };
-    }).toList();
+    final items =
+        itemControllers.map((c) {
+          return {
+            "price": double.tryParse(c["price"]!.text) ?? 0,
+            "quantity": int.tryParse(c["quantity"]!.text) ?? 0,
+          };
+        }).toList();
 
     final total = _calculateTotal(items);
     final discount = total * 0.10;

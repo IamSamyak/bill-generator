@@ -22,12 +22,14 @@ class Bill {
   });
 
   factory Bill.fromFirestore(Map<String, dynamic> data, String documentId) {
+    final dynamic billDateField = data['billDate'];
+
     DateTime parsedDate;
 
-    if (data['billDate'] is Timestamp) {
-      parsedDate = (data['billDate'] as Timestamp).toDate();
-    } else if (data['billDate'] is String) {
-      parsedDate = DateTime.tryParse(data['billDate']) ?? DateTime.now();
+    if (billDateField is Timestamp) {
+      parsedDate = billDateField.toDate();
+    } else if (billDateField is String) {
+      parsedDate = DateTime.tryParse(billDateField) ?? DateTime.now();
     } else {
       parsedDate = DateTime.now();
     }
@@ -122,7 +124,6 @@ class PurchaseItem {
   }
 }
 
-
 class WeeklyBillReport {
   final List<Bill> bills;
   final Map<String, double> weeklyRevenue; // e.g. "2025-W20" : 1234.56
@@ -149,4 +150,3 @@ class WeeklyBillReport {
            ')';
   }
 }
-

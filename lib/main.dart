@@ -1,17 +1,18 @@
+import 'package:bill_generator/models/ShopDetail.dart';
 import 'package:bill_generator/pages/add_categories_page.dart';
 import 'package:bill_generator/pages/search_bill_page.dart';
-import 'package:bill_generator/pages/menu_screen_page.dart';
+import 'package:bill_generator/pages/shop_info_page.dart';
 import 'package:bill_generator/pages/range_dashboard_page.dart';
 import 'package:bill_generator/pages/reports_page.dart';
-import 'package:bill_generator/pages/share_images_page.dart';
+import 'package:bill_generator/services/company_profile_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:bill_generator/pages/home_page.dart';
 import 'package:bill_generator/pages/create_bill_page.dart';
 import 'package:bill_generator/pages/history_page.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:bill_generator/widgets/bottom_nav_bar.dart'; // Import the new widget
-import 'package:bill_generator/widgets/app_drawer.dart'; // Import the new widget
+import 'package:bill_generator/widgets/bottom_nav_bar.dart';
+import 'package:bill_generator/widgets/app_drawer.dart';
+import 'package:provider/provider.dart';
 
 // Define the main color as a constant
 const Color kMainColor = Color(0xFF1A66BE);
@@ -19,8 +20,31 @@ const Color kMainColor = Color(0xFF1A66BE);
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  await dotenv.load(fileName: ".env");
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ShopDetailProvider(),
+      child: const MyApp(),
+    ),
+  );
+}
+
+class ShopDetailProvider extends ChangeNotifier {
+  ShopDetail? _shopDetail;
+  final CompanyProfileService _companyProfileService = CompanyProfileService();
+
+  ShopDetail? get shopDetail => _shopDetail;
+
+  ShopDetailProvider() {
+    fetchShopDetails();
+  }
+
+  Future<void> fetchShopDetails() async {
+    final details = await _companyProfileService.fetchShopDetails();
+    if (details != null) {
+      _shopDetail = details;
+      notifyListeners();
+    }
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -71,7 +95,6 @@ class _MainScreenState extends State<MainScreen> {
     setState(() {
       _currentPage = page;
     });
-    // Navigator.pop(context);
   }
 
   void _onNavItemTapped(int index) {
@@ -94,7 +117,6 @@ class _MainScreenState extends State<MainScreen> {
     });
   }
 
-  // New method to get AppBar title based on current page
   String _getAppBarTitle() {
     switch (_currentPage) {
       case 'CreateBill':
@@ -114,13 +136,17 @@ class _MainScreenState extends State<MainScreen> {
       case 'UpdateCategories':
         return 'Manage Categories';
       default:
-        return 'Bill Generator'; // Default title
+        return 'Bill Generator';
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // Access shopDetail from Provider
+    final shopDetail = context.watch<ShopDetailProvider>().shopDetail;
+
     Widget bodyWidget;
+
     switch (_currentPage) {
       case 'CreateBill':
         bodyWidget = CreateBillPage(onBack: () => _navigateToPage('Home'));
@@ -138,9 +164,6 @@ class _MainScreenState extends State<MainScreen> {
       case 'EditDetails':
         bodyWidget = CompanyProfilePage();
         break;
-      case 'Share-Media':
-        bodyWidget = ShareImagesPage();
-        break;
       case 'UpdateBills':
         Navigator.pop(context);
         bodyWidget = SearchBillPage(onNavigate: _navigateToPage);
@@ -154,7 +177,10 @@ class _MainScreenState extends State<MainScreen> {
         bodyWidget = OperateCategories();
         break;
       default:
-        bodyWidget = HomePage(onNavigate: _navigateToPage);
+        bodyWidget = HomePage(
+          onNavigate: _navigateToPage,
+          shopName: shopDetail?.shopName ?? "Akash Men's Wear",
+        );
     }
 
     return Scaffold(
@@ -177,8 +203,8 @@ class _MainScreenState extends State<MainScreen> {
           },
         ),
       ),
-       drawer: SizedBox(
-        width: 250, // Adjust the width here as per your preference
+      drawer: SizedBox(
+        width: 250,
         child: AppDrawer(onNavigate: _navigateToPage),
       ),
       body: bodyWidget,
