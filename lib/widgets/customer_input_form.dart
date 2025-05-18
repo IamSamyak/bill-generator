@@ -142,7 +142,7 @@ class _CustomerInputFormState extends State<CustomerInputForm> {
                     Text(
                       "Listening for $label",
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: Colors.blue.shade700,
                       ),
@@ -164,7 +164,7 @@ class _CustomerInputFormState extends State<CustomerInputForm> {
                             : "Listening...",
                         style: TextStyle(
                           fontSize: 16,
-                          color: Colors.blue.shade900,
+                          color: Colors.blue.shade700,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -182,10 +182,10 @@ class _CustomerInputFormState extends State<CustomerInputForm> {
                         ),
                       ),
                       onPressed: _stopListening,
-                      icon: const Icon(Icons.stop, size: 24),
+                      icon: const Icon(Icons.stop, size: 24,color: Colors.white,),
                       label: const Text(
                         "Stop Listening",
-                        style: TextStyle(fontSize: 16),
+                        style: TextStyle(fontSize: 16,color: Colors.white),
                       ),
                     ),
                   ],

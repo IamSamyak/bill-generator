@@ -8,7 +8,7 @@ import '../widgets/customer_input_form.dart';
 import '../widgets/item_input_row.dart';
 import '../services/bill_service.dart';
 import 'package:bill_generator/models/Bill.dart';
-import 'package:lottie/lottie.dart';
+import '../services/lottefile_dialog.dart';
 
 class CreateBillPage extends StatefulWidget {
   final VoidCallback onBack;
@@ -157,81 +157,55 @@ class _CreateBillPageState extends State<CreateBillPage> {
     });
     generatedPdf = await _billService.generatePdfAndSave(
       bill,
-      _receiptIdForBill
+      _receiptIdForBill,
     );
     return (receiptId != "");
   }
 
-void _viewPdf() async {
-  // Show Lottie animation dialog with faint background and fixed sizing
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    barrierColor: Colors.black54,  // semi-transparent dark background
-    builder: (_) => Dialog(
-      backgroundColor: Colors.white,
-      insetPadding: EdgeInsets.symmetric(horizontal: 40),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Container(
-        padding: EdgeInsets.all(24),
-        constraints: BoxConstraints(
-          maxWidth: 280,
-          minHeight: 180,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            SizedBox(
-              width: 150,
-              height: 150,
-              child: Lottie.asset('assets/animations/BillPrint.json'),
-            ),
-            SizedBox(height: 12),
-            Text(
-              'Please wait while we are printing your bill',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-
-  // Start a timer for 5 seconds AND start PDF generation simultaneously
-  final pdfFuture = (generatedPdf == null || !await generatedPdf!.exists())
-      ? _generateBill()
-      : Future.value(true);
-
-  // Wait for both the PDF generation and the 5 second delay
-  final results = await Future.wait([
-    pdfFuture,
-    Future.delayed(Duration(seconds: 5)),
-  ]);
-
-  // Close the loading animation dialog
-  Navigator.of(context).pop();
-
-  bool pdfReady = results[0] == true;
-
-  // Show the PDF viewer if ready
-  if (pdfReady && generatedPdf != null && await generatedPdf!.exists()) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => Dialog(
-        insetPadding: EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        child: PdfViewerDialogContent(path: generatedPdf!.path),
-      ),
+  void _viewPdf() async {
+    await showLottieDialog(
+      context,
+      'assets/animations/BillPrint.json',
+      message: 'Please wait while we are printing your bill',
     );
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("❌ Failed to store bill")),
-    );
+
+    // Start a timer for 5 seconds AND start PDF generation simultaneously
+    final pdfFuture =
+        (generatedPdf == null || !await generatedPdf!.exists())
+            ? _generateBill()
+            : Future.value(true);
+
+    // Wait for both the PDF generation and the 5 second delay
+    final results = await Future.wait([
+      pdfFuture,
+      Future.delayed(Duration(seconds: 5)),
+    ]);
+
+    // Close the loading animation dialog
+    Navigator.of(context).pop();
+
+    bool pdfReady = results[0] == true;
+
+    // Show the PDF viewer if ready
+    if (pdfReady && generatedPdf != null && await generatedPdf!.exists()) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder:
+            (_) => Dialog(
+              insetPadding: EdgeInsets.all(16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: PdfViewerDialogContent(path: generatedPdf!.path),
+            ),
+      );
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("❌ Failed to store bill")));
+    }
   }
-}
 
   void _shareOnWhatsApp() async {
     if (generatedPdf == null || !await generatedPdf!.exists()) {
