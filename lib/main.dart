@@ -4,14 +4,15 @@ import 'package:bill_generator/pages/search_bill_page.dart';
 import 'package:bill_generator/pages/shop_info_page.dart';
 import 'package:bill_generator/pages/range_dashboard_page.dart';
 import 'package:bill_generator/pages/reports_page.dart';
+import 'package:bill_generator/pages/splash_screen.dart'; // <-- Updated Splash Screen
 import 'package:bill_generator/services/company_profile_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:bill_generator/pages/home_page.dart';
 import 'package:bill_generator/pages/create_bill_page.dart';
 import 'package:bill_generator/pages/history_page.dart';
-import 'package:bill_generator/widgets/bottom_nav_bar.dart'; // Import the new widget
-import 'package:bill_generator/widgets/app_drawer.dart'; // Import the new widget
+import 'package:bill_generator/widgets/bottom_nav_bar.dart';
+import 'package:bill_generator/widgets/app_drawer.dart';
 
 // Define the main color as a constant
 const Color kMainColor = Color(0xFF1A66BE);
@@ -29,6 +30,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Bill Generator',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         scaffoldBackgroundColor: Colors.white,
         appBarTheme: const AppBarTheme(
@@ -50,7 +52,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(seedColor: kMainColor),
       ),
-      home: const MainScreen(),
+      home: const SplashScreen(), // <-- Now loads the SplashScreen first
     );
   }
 }
@@ -65,10 +67,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
   String _currentPage = 'Home';
-
-  // Hold full shop details, not just name
   ShopDetail? _shopDetail;
-
   final CompanyProfileService _companyProfileService = CompanyProfileService();
 
   @override
@@ -170,8 +169,10 @@ class _MainScreenState extends State<MainScreen> {
         bodyWidget = OperateCategories();
         break;
       default:
-        // Pass only shopName to HomePage
-        bodyWidget = HomePage(onNavigate: _navigateToPage, shopName: _shopDetail?.shopName ?? "Akash Men's Wear");
+        bodyWidget = HomePage(
+          onNavigate: _navigateToPage,
+          shopName: _shopDetail?.shopName ?? "Akash Men's Wear",
+        );
     }
 
     return Scaffold(

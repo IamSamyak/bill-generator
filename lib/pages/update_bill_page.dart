@@ -6,7 +6,7 @@ import '../widgets/order_summary.dart';
 import '../widgets/customer_input_form.dart';
 import '../widgets/item_input_row.dart';
 import '../services/bill_service.dart';
-import 'pdf_viewer_page.dart';
+import '../widgets/pdf_viewer_modal.dart';
 import 'package:bill_generator/models/Bill.dart';
 
 class UpdateBillPage extends StatefulWidget {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class CustomerInputForm extends StatefulWidget {
@@ -25,6 +26,7 @@ class _CustomerInputFormState extends State<CustomerInputForm> {
   String _lastRecognized = '';
   TextEditingController? _activeController;
   String _activeLabel = '';
+  Function? _updateModalState;
 
   final Map<String, String> _spokenToDigit = {
     "zero": "0",
@@ -53,28 +55,34 @@ class _CustomerInputFormState extends State<CustomerInputForm> {
         _activeController = controller;
         _activeLabel = label;
         _lastRecognized = '';
+        controller.clear();
       });
+
+      _showListeningModal(label); // Open modal once
 
       _speech.listen(
         onResult: (result) {
           String recognized = result.recognizedWords;
-
           if (_activeLabel.toLowerCase().contains("mobile")) {
             recognized = _processMobileInput(recognized);
           }
 
           setState(() {
-            _lastRecognized = recognized;
-            _activeController!.text = recognized;
+            // Instead of overriding, append new words
+            if (recognized.length >= _lastRecognized.length) {
+              _lastRecognized = recognized;
+            }
+
+            _activeController!.text = _lastRecognized;
             _activeController!.selection = TextSelection.fromPosition(
-              TextPosition(offset: recognized.length),
+              TextPosition(offset: _lastRecognized.length),
             );
           });
+
+          _updateModalState?.call(() {});
         },
         listenMode: stt.ListenMode.dictation,
       );
-
-      _showListeningModal(label);
     } else {
       setState(() => _isListening = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -95,96 +103,100 @@ class _CustomerInputFormState extends State<CustomerInputForm> {
       input = input.replaceAll(entry.key, entry.value);
     }
 
-    // Remove non-digit characters and limit to 10 digits
     final digitsOnly = input.replaceAll(RegExp(r'\D'), '');
     return digitsOnly.length > 10 ? digitsOnly.substring(0, 10) : digitsOnly;
   }
 
-void _showListeningModal(String label) {
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (_) => StatefulBuilder(
-      builder: (context, setState) {
-        // We'll listen to changes in _lastRecognized using a timer or by passing setState
-        // So to update the dialog UI, we call setState from the onResult callback
-        // Let's do this by passing a callback when starting listening.
+  void _showListeningModal(String label) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            _updateModalState = setState;
 
-        // But since _showListeningModal is called after _speech.listen(), and onResult calls setState,
-        // the dialog will update because _lastRecognized is in the State.
-
-        return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          backgroundColor: Colors.white,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.mic, size: 48, color: Colors.blue.shade700),
-                const SizedBox(height: 16),
-                Text(
-                  "Listening for $label",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.blue.shade700,
-                  ),
+            return Dialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              backgroundColor: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 20,
+                  horizontal: 24,
                 ),
-                const SizedBox(height: 12),
-                // Show this text only if no speech recognized yet:
-                if (_lastRecognized.isEmpty) ...[
-                  Text(
-                    "Please speak the $label now.",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey.shade700,
-                      fontStyle: FontStyle.italic,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 20),
-                ],
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.blue.shade200),
-                  ),
-                  child: Text(
-                    _lastRecognized.isNotEmpty ? _lastRecognized : "Listening...",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.blue.shade900,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.shade600,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                    height: 50,
+                    width: 50,
+                    child: Lottie.asset(
+                      'assets/animations/SpeakingMic.json',
+                      fit: BoxFit.contain,
+                      repeat: true,
                     ),
                   ),
-                  onPressed: _stopListening,
-                  icon: const Icon(Icons.stop, size: 24),
-                  label: const Text(
-                    "Stop Listening",
-                    style: TextStyle(fontSize: 16),
-                  ),
+                    const SizedBox(height: 16),
+                    Text(
+                      "Listening for $label",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue.shade700,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.blue.shade200),
+                      ),
+                      child: Text(
+                        _lastRecognized.isNotEmpty
+                            ? _lastRecognized
+                            : "Listening...",
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.blue.shade900,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red.shade600,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: _stopListening,
+                      icon: const Icon(Icons.stop, size: 24),
+                      label: const Text(
+                        "Stop Listening",
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildVoiceInputField({
     required String label,
@@ -267,16 +279,15 @@ void _showListeningModal(String label) {
         const SizedBox(height: 5),
         DropdownButtonFormField<String>(
           value: widget.payStatus,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-          ),
+          decoration: const InputDecoration(border: OutlineInputBorder()),
           dropdownColor: Colors.white,
-          items: ['Paid', 'Unpaid'].map((status) {
-            return DropdownMenuItem<String>(
-              value: status,
-              child: Text(status),
-            );
-          }).toList(),
+          items:
+              ['Paid', 'Unpaid'].map((status) {
+                return DropdownMenuItem<String>(
+                  value: status,
+                  child: Text(status),
+                );
+              }).toList(),
           onChanged: widget.onPayStatusChanged,
         ),
         const SizedBox(height: 20),

@@ -26,27 +26,33 @@ class BillService {
           .orderBy('billDate', descending: true)
           .limit(limit);
 
+      // Apply filter in query, only if payStatus is NOT "All"
+      if (payStatusFilter != 'All') {
+        query = query.where('payStatus', isEqualTo: payStatusFilter);
+      }
+
       if (lastDocument != null) {
+        print("Fetching bills after document ID: ${lastDocument.id}");
         query = query.startAfterDocument(lastDocument);
       }
 
       QuerySnapshot querySnapshot = await query.get();
 
-      // Update the last document snapshot for pagination
+      // Update last document for pagination
       this.lastDocument =
           querySnapshot.docs.isNotEmpty ? querySnapshot.docs.last : null;
 
-      List<Bill> bills = [];
+      List<Bill> bills =
+          querySnapshot.docs.map((doc) {
+            var data = doc.data() as Map<String, dynamic>;
+            return Bill.fromFirestore(data, doc.id);
+          }).toList();
 
-      for (var doc in querySnapshot.docs) {
-        var data = doc.data() as Map<String, dynamic>;
-        if (payStatusFilter == 'All' || data['payStatus'] == payStatusFilter) {
-          bills.add(Bill.fromFirestore(data, doc.id));
-        }
-      }
+      print("Fetched ${bills.length} bills.");
 
       return bills;
     } catch (e) {
+      print("Error fetching bills: $e");
       throw Exception('Failed to fetch bills: $e');
     }
   }
@@ -294,14 +300,10 @@ class BillService {
     }
   }
 
-  Future<File?> generatePdfAndSave(
-    Bill bill,
-    String receiptId,
-  ) async {
+  Future<File?> generatePdfAndSave(Bill bill, String receiptId) async {
     final pdf = pw.Document();
-    ShopDetail? shopDetail = await _companyProfileService.fetchShopDetails(); 
-    print("shopdetail $shopDetail");
-    if(shopDetail == null){
+    ShopDetail? shopDetail = await _companyProfileService.fetchShopDetails();
+    if (shopDetail == null) {
       return null;
     }
 

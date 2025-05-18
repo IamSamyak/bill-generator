@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:bill_generator/pages/pdf_viewer_page.dart';
+import 'package:bill_generator/widgets/pdf_viewer_modal.dart';
 import 'package:bill_generator/services/bill_service.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';

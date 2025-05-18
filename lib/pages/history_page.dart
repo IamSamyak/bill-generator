@@ -44,14 +44,14 @@ class _HistoryPageState extends State<HistoryPage> {
     try {
       List<Bill> bills = await billService.fetchBills(
         payStatusFilter: widget.payStatusParam,
-        limit: 20,
+        limit: 25,
         lastDocument: loadMore ? _lastDocument : null,
       );
 
       if (bills.length < 20) {
         _hasMore = false;
-      }
-
+      } 
+      
       if (bills.isNotEmpty) {
         _lastDocument = billService.lastDocument;
         _allBills.addAll(bills);
@@ -114,9 +114,10 @@ class _HistoryPageState extends State<HistoryPage> {
           children: [
             const SizedBox(height: 8),
             Expanded(
-              child: _bills.isNotEmpty
-                  ? BillList(bills: _bills)
-                  : const Center(child: Text("No bills available")),
+              child:
+                  _bills.isNotEmpty
+                      ? BillList(bills: _bills)
+                      : const Center(child: Text("No bills available")),
             ),
             if (_isLoadingMore)
               const Padding(

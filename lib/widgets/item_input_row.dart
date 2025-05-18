@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/Category.dart';
-import '../services/category_service.dart'; // Import your service
+import '../services/category_service.dart';
 
 class ItemInputRow extends StatefulWidget {
   final TextEditingController productCategoryController;
@@ -23,12 +23,23 @@ class ItemInputRow extends StatefulWidget {
 }
 
 class _ItemInputRowState extends State<ItemInputRow> {
-  late final List<Category> categories;
+  late List<Category> categories;
+  Category? selectedCategory;
 
   @override
   void initState() {
     super.initState();
     categories = CategoryService().getCategories();
+
+    // Try to find matching category, otherwise set to null manually
+    selectedCategory =
+        categories.any(
+              (cat) => cat.label == widget.productCategoryController.text,
+            )
+            ? categories.firstWhere(
+              (cat) => cat.label == widget.productCategoryController.text,
+            )
+            : null;
   }
 
   @override
@@ -43,30 +54,45 @@ class _ItemInputRowState extends State<ItemInputRow> {
               decoration: const InputDecoration(
                 labelText: "Item Type",
                 border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 5,
+                ),
               ),
               child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: widget.productCategoryController.text.isEmpty
-                      ? null
-                      : widget.productCategoryController.text,
-                  items: categories.map((category) {
-                    return DropdownMenuItem<String>(
-                      value: category.label,
-                      child: Text(category.label),
-                    );
-                  }).toList(),
+                child: DropdownButton<Category>(
+                  value: selectedCategory,
+                  items:
+                      categories.map((category) {
+                        return DropdownMenuItem<Category>(
+                          value: category,
+                          child: Text(
+                            category.label,
+                          ), // Show text in dropdown list
+                        );
+                      }).toList(),
+                  selectedItemBuilder: (BuildContext context) {
+                    return categories.map<Widget>((category) {
+                      return category.imagePath != null
+                          ? Image.asset(
+                            category.imagePath!,
+                            width: 32,
+                            height: 32,
+                          )
+                          : const Icon(Icons.image_not_supported);
+                    }).toList(); // Show image when dropdown is closed
+                  },
                   onChanged: (value) {
                     if (value != null) {
                       setState(() {
-                        widget.productCategoryController.text = value;
+                        selectedCategory = value;
+                        widget.productCategoryController.text = value.label;
                       });
                     }
                   },
                   isExpanded: true,
                   dropdownColor: Colors.white,
                   borderRadius: const BorderRadius.all(Radius.circular(4)),
-                  menuWidth: 122,
                   elevation: 1,
                 ),
               ),
