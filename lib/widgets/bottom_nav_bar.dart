@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants.dart'; // Import the constants
 
 class BottomNavBar extends StatelessWidget {
   final int selectedIndex;
@@ -12,9 +13,6 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color kMainColor = Color(0xFF1A66BE);
-    const Color customTextColor = Color(0xFF374151); // Font color for unselected items
-
     return BottomNavigationBar(
       items: [
         BottomNavigationBarItem(
@@ -47,8 +45,8 @@ class BottomNavBar extends StatelessWidget {
         ),
       ],
       currentIndex: selectedIndex,
-      selectedItemColor: kMainColor,
-      unselectedItemColor: customTextColor, // Apply the font color here
+      selectedItemColor: primaryColor,
+      unselectedItemColor: bottomNavigationBarUnselectedColor,
       selectedLabelStyle: const TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.bold,
@@ -56,7 +54,7 @@ class BottomNavBar extends StatelessWidget {
       unselectedLabelStyle: const TextStyle(
         fontSize: 12,
         fontWeight: FontWeight.w500,
-        color: customTextColor, // Flutter will ignore this for BottomNavigationBar
+        // Note: color is ignored for unselectedLabelStyle in BottomNavigationBar
       ),
       onTap: onItemTapped,
     );

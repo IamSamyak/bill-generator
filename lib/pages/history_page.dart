@@ -15,6 +15,7 @@ class HistoryPage extends StatefulWidget {
 
 class _HistoryPageState extends State<HistoryPage> {
   final BillService billService = BillService();
+  final ScrollController _scrollController = ScrollController();
 
   Map<String, List<Bill>> _bills = {};
   List<Bill> _allBills = [];
@@ -28,10 +29,25 @@ class _HistoryPageState extends State<HistoryPage> {
   void initState() {
     super.initState();
     _fetchAndCategorizeBills();
+
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >=
+              _scrollController.position.maxScrollExtent - 200 &&
+          !_isLoadingMore &&
+          _hasMore) {
+        _fetchAndCategorizeBills(loadMore: true);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchAndCategorizeBills({bool loadMore = false}) async {
-    if (_isLoadingMore || !_hasMore) return;
+    if (_isLoadingMore || (!_hasMore && loadMore)) return;
 
     setState(() {
       if (loadMore) {
@@ -44,14 +60,14 @@ class _HistoryPageState extends State<HistoryPage> {
     try {
       List<Bill> bills = await billService.fetchBills(
         payStatusFilter: widget.payStatusParam,
-        limit: 25,
+        limit: 20,
         lastDocument: loadMore ? _lastDocument : null,
       );
 
       if (bills.length < 20) {
         _hasMore = false;
-      } 
-      
+      }
+
       if (bills.isNotEmpty) {
         _lastDocument = billService.lastDocument;
         _allBills.addAll(bills);
@@ -100,32 +116,25 @@ class _HistoryPageState extends State<HistoryPage> {
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: NotificationListener<ScrollNotification>(
-        onNotification: (ScrollNotification scrollInfo) {
-          if (!_isLoadingMore &&
-              _hasMore &&
-              scrollInfo.metrics.pixels >=
-                  scrollInfo.metrics.maxScrollExtent - 200) {
-            _fetchAndCategorizeBills(loadMore: true);
-          }
-          return false;
-        },
-        child: Column(
-          children: [
-            const SizedBox(height: 8),
-            Expanded(
-              child:
-                  _bills.isNotEmpty
-                      ? BillList(bills: _bills)
-                      : const Center(child: Text("No bills available")),
-            ),
-            if (_isLoadingMore)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 16),
-                child: CircularProgressIndicator(),
-              ),
-          ],
-        ),
+      child: Column(
+        children: [
+          const SizedBox(height: 8),
+          Expanded(
+            child: _bills.isNotEmpty
+                ? ListView(
+                    controller: _scrollController,
+                    children: [
+                      BillList(bills: _bills),
+                      if (_isLoadingMore)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Center(child: CircularProgressIndicator()),
+                        ),
+                    ],
+                  )
+                : const Center(child: Text("No bills available")),
+          ),
+        ],
       ),
     );
   }

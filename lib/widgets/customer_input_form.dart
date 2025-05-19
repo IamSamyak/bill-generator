@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import '../constants.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 class CustomerInputForm extends StatefulWidget {
@@ -213,7 +214,7 @@ class _CustomerInputFormState extends State<CustomerInputForm> {
           style: const TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF374151),
+            color: inputLabelColor,
           ),
         ),
         const SizedBox(height: 5),
@@ -273,7 +274,7 @@ class _CustomerInputFormState extends State<CustomerInputForm> {
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF374151),
+            color: inputLabelColor,
           ),
         ),
         const SizedBox(height: 5),

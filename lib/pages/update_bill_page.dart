@@ -8,6 +8,7 @@ import '../widgets/item_input_row.dart';
 import '../services/bill_service.dart';
 import '../widgets/pdf_viewer_modal.dart';
 import 'package:bill_generator/models/Bill.dart';
+import '../constants.dart';
 
 class UpdateBillPage extends StatefulWidget {
   final Bill bill;
@@ -304,7 +305,7 @@ class _UpdateBillPageState extends State<UpdateBillPage> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF374151),
+                      color: inputLabelColor,
                     ),
                   ),
                   ElevatedButton(

@@ -1,6 +1,6 @@
 import 'package:bill_generator/widgets/bill_item_history_page.dart';
 import 'package:flutter/material.dart';
-import '../models/Bill.dart'; // Ensure you import your Bill model
+import '../models/Bill.dart';
 
 class BillList extends StatelessWidget {
   final Map<String, List<Bill>> bills;
@@ -9,11 +9,12 @@ class BillList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: bills.entries.map((entry) {
         List<Bill> billList = entry.value;
 
-        if (billList.isEmpty) return Container();
+        if (billList.isEmpty) return const SizedBox();
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -24,7 +25,9 @@ class BillList extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Column(
-              children: billList.map((bill) => BillItemWidget(bill: bill)).toList(),
+              children: billList
+                  .map((bill) => BillItemWidget(bill: bill))
+                  .toList(),
             ),
             const SizedBox(height: 8),
           ],

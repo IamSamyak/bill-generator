@@ -9,6 +9,7 @@ import '../widgets/item_input_row.dart';
 import '../services/bill_service.dart';
 import 'package:bill_generator/models/Bill.dart';
 import '../services/lottefile_dialog.dart';
+import '../constants.dart';
 
 class CreateBillPage extends StatefulWidget {
   final VoidCallback onBack;
@@ -100,6 +101,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
   }
 
   Future<bool> _generateBill() async {
+    FocusScope.of(context).unfocus();
     if (!_validateInputs()) {
       return false;
     }
@@ -163,7 +165,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
   }
 
   void _viewPdf() async {
-    await showLottieDialog(
+    showLottieDialog(
       context,
       'assets/animations/BillPrint.json',
       message: 'Please wait while we are printing your bill',
@@ -265,7 +267,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF374151),
+                color: inputLabelColor,
               ),
             ),
             const SizedBox(height: 10),

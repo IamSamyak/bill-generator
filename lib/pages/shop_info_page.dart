@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../services/company_profile_service.dart';
+import '../constants.dart';
 
 class CompanyProfilePage extends StatefulWidget {
   const CompanyProfilePage({Key? key}) : super(key: key);
@@ -249,7 +250,7 @@ class _CompanyProfilePageState extends State<CompanyProfilePage> {
       style: const TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w600,
-        color: Color(0xFF374151),
+        color: inputLabelColor,
       ),
     );
   }

@@ -4,7 +4,7 @@ import 'package:bill_generator/pages/search_bill_page.dart';
 import 'package:bill_generator/pages/shop_info_page.dart';
 import 'package:bill_generator/pages/range_dashboard_page.dart';
 import 'package:bill_generator/pages/reports_page.dart';
-import 'package:bill_generator/pages/splash_screen.dart'; // <-- Updated Splash Screen
+import 'package:bill_generator/pages/splash_screen.dart';
 import 'package:bill_generator/services/company_profile_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -13,9 +13,8 @@ import 'package:bill_generator/pages/create_bill_page.dart';
 import 'package:bill_generator/pages/history_page.dart';
 import 'package:bill_generator/widgets/bottom_nav_bar.dart';
 import 'package:bill_generator/widgets/app_drawer.dart';
-
-// Define the main color as a constant
-const Color kMainColor = Color(0xFF1A66BE);
+import 'package:bill_generator/constants.dart';
+import 'package:bill_generator/services/page_navigation_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,8 +33,8 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         scaffoldBackgroundColor: Colors.white,
         appBarTheme: const AppBarTheme(
-          backgroundColor: kMainColor,
-          surfaceTintColor: kMainColor,
+          backgroundColor: primaryColor,
+          surfaceTintColor: primaryColor,
           elevation: 3,
           titleTextStyle: TextStyle(
             color: Colors.white,
@@ -50,9 +49,9 @@ class MyApp extends StatelessWidget {
           type: BottomNavigationBarType.fixed,
         ),
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: kMainColor),
+        colorScheme: ColorScheme.fromSeed(seedColor: primaryColor),
       ),
-      home: const SplashScreen(), // <-- Now loads the SplashScreen first
+      home: const SplashScreen(),
     );
   }
 }
@@ -83,60 +82,23 @@ class _MainScreenState extends State<MainScreen> {
         _shopDetail = details;
       });
     }
-    print("Shop details: $_shopDetail");
+  }
+
+  void _onNavItemTapped(int index) {
+    final page = PageNavigationService.getPageFromNavIndex(index);
+    _navigateToPage(page);
   }
 
   void _navigateToPage(String page) {
     setState(() {
       _currentPage = page;
+      _selectedIndex = PageNavigationService.getNavIndexFromPage(page);
     });
-  }
-
-  void _onNavItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-      switch (index) {
-        case 0:
-          _navigateToPage('Home');
-          break;
-        case 1:
-          _navigateToPage('History-Paid');
-          break;
-        case 2:
-          _navigateToPage('Reports');
-          break;
-        case 3:
-          _navigateToPage('EditDetails');
-          break;
-      }
-    });
-  }
-
-  String _getAppBarTitle() {
-    switch (_currentPage) {
-      case 'CreateBill':
-        return 'Create Bill';
-      case 'History-Paid':
-        return 'Payment History';
-      case 'History-Unpaid':
-        return 'Unpaid Bills';
-      case 'Reports':
-        return 'Reports';
-      case 'EditDetails':
-        return 'Edit Company Details';
-      case 'Share-Media':
-        return 'Share Media';
-      case 'UpdateBills':
-        return 'Update Bills';
-      case 'UpdateCategories':
-        return 'Manage Categories';
-      default:
-        return 'Bill Generator';
-    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final appBarTitle = PageNavigationService.getAppBarTitle(_currentPage);
     Widget bodyWidget;
 
     switch (_currentPage) {
@@ -147,25 +109,21 @@ class _MainScreenState extends State<MainScreen> {
         bodyWidget = HistoryPage(payStatusParam: "Paid");
         break;
       case 'History-Unpaid':
-        Navigator.pop(context);
         bodyWidget = HistoryPage(payStatusParam: "Unpaid");
         break;
       case 'Reports':
         bodyWidget = ReportsPage();
         break;
-      case 'EditDetails':
+      case 'CompanyProfile':
         bodyWidget = CompanyProfilePage();
         break;
       case 'UpdateBills':
-        Navigator.pop(context);
         bodyWidget = SearchBillPage(onNavigate: _navigateToPage);
         break;
       case 'RangeSelector':
-        Navigator.pop(context);
         bodyWidget = DateRangeSelectionWidget();
         break;
       case 'UpdateCategories':
-        Navigator.pop(context);
         bodyWidget = OperateCategories();
         break;
       default:
@@ -177,7 +135,7 @@ class _MainScreenState extends State<MainScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_getAppBarTitle()),
+        title: Text(appBarTitle),
         centerTitle: true,
         leading: Builder(
           builder: (context) {
@@ -200,12 +158,13 @@ class _MainScreenState extends State<MainScreen> {
         child: AppDrawer(onNavigate: _navigateToPage),
       ),
       body: bodyWidget,
-      bottomNavigationBar: (_currentPage != 'CreateBill')
-          ? BottomNavBar(
-              selectedIndex: _selectedIndex,
-              onItemTapped: _onNavItemTapped,
-            )
-          : null,
+      bottomNavigationBar:
+          (_currentPage != 'CreateBill')
+              ? BottomNavBar(
+                selectedIndex: _selectedIndex,
+                onItemTapped: _onNavItemTapped,
+              )
+              : null,
     );
   }
 }

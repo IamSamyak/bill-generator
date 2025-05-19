@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../constants.dart';
 
 class GraphDescription extends StatelessWidget {
   const GraphDescription({
@@ -11,8 +12,6 @@ class GraphDescription extends StatelessWidget {
   final double totalRevenue;
   final int totalPaidBills;
   final int pendingBills;
-
-  static const Color customTextColor = Color(0xFF374151); // Custom font color
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +65,7 @@ class GraphDescription extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: customTextColor,
+                color: inputLabelColor,
               ),
             ),
             const SizedBox(height: 8),
@@ -75,7 +74,7 @@ class GraphDescription extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: customTextColor,
+                color: inputLabelColor,
               ),
             ),
           ],

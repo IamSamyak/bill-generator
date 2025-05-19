@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-
-// Define the main color as a constant
-const Color kMainColor = Color(0xFF1864BF);
+import '../constants.dart'; // Import the constants file
 
 class HomePage extends StatelessWidget {
   final Function(String) onNavigate;
-  final String shopName; // Add this line to accept shopName
+  final String shopName;
 
   const HomePage({
     super.key,
@@ -43,11 +41,11 @@ class HomePage extends StatelessWidget {
               ),
             ),
             Text(
-              shopName, // Use the dynamic shopName
+              shopName,
               style: const TextStyle(
                 fontSize: 26,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF184373),
+                color: headingFontColor,
               ),
             ),
             const SizedBox(height: 5),
@@ -60,7 +58,7 @@ class HomePage extends StatelessWidget {
             ElevatedButton(
               onPressed: () => onNavigate('CreateBill'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: kMainColor,
+                backgroundColor: primaryColor,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 36,
                   vertical: 18,

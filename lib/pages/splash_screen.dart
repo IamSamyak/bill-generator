@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:bill_generator/main.dart'; // For MainScreen
+import 'package:lottie/lottie.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -14,8 +16,16 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
 
-    // Simulate loading time and navigate to MainScreen
-    Timer(const Duration(seconds: 3), () {
+    // Show status bar with white background and dark icons
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        statusBarColor: Colors.white,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
+    );
+
+    Timer(const Duration(seconds: 10), () {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const MainScreen()),
@@ -25,30 +35,28 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Color(0xFF1A66BE), // Match your main color
+    return Scaffold(
+      backgroundColor: Colors.white,
       body: Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.receipt_long,
-              size: 100,
-              color: Colors.white,
+            Lottie.asset(
+              'assets/animations/SlidingBill.json',
+              width: 200,
+              height: 200,
+              fit: BoxFit.contain,
             ),
-            SizedBox(height: 20),
-            Text(
-              'Bill Generator',
-              style: TextStyle(
-                fontSize: 26,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                letterSpacing: 1.2,
-              ),
+            Lottie.asset(
+              'assets/animations/MOBIBILL.json',
+              width: 200,
+              height: 200,
+              fit: BoxFit.contain,
             ),
-            SizedBox(height: 10),
-            CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            Lottie.asset(
+              'assets/animations/SearchDocument.json',
+              width: 200,
+              height: 200,
+              fit: BoxFit.contain,
             ),
           ],
         ),
