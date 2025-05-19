@@ -51,7 +51,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(seedColor: primaryColor),
       ),
-      home: const SplashScreen(),
+      home: const SplashWrapper(),
     );
   }
 }
@@ -120,7 +120,7 @@ class _MainScreenState extends State<MainScreen> {
       case 'UpdateBills':
         bodyWidget = SearchBillPage(onNavigate: _navigateToPage);
         break;
-      case 'RangeSelector':
+      case 'Analytics':
         bodyWidget = DateRangeSelectionWidget();
         break;
       case 'UpdateCategories':

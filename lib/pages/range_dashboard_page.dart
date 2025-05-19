@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:bill_generator/models/Bill.dart';
 import 'package:bill_generator/services/bill_service.dart';
+import 'package:lottie/lottie.dart';
 import '../widgets/date_range_display.dart';
 
 class DateRangeSelectionWidget extends StatefulWidget {
@@ -46,24 +47,20 @@ class _DateRangeSelectionWidgetState extends State<DateRangeSelectionWidget> {
 
   @override
   Widget build(BuildContext context) {
-
     return SingleChildScrollView(
       child: Column(
         children: [
           if (selectedRange == null) ...[
+            const SizedBox(height: 55,),
             Center(
-              child: Transform.translate(
-                offset: const Offset(4, 0),
-                child: ClipRect(
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    heightFactor: 0.8,
-                    child: Image.asset(
-                      'assets/images/RangeAsset.png',
-                      height: 360,
-                      fit: BoxFit.contain,
-                    ),
-                  ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(
+                  20,
+                ), // adjust the radius as needed
+                child: Lottie.asset(
+                  'assets/animations/PersonWithDashboard.json',
+                  height: 200,
+                  fit: BoxFit.contain,
                 ),
               ),
             ),
@@ -75,13 +72,17 @@ class _DateRangeSelectionWidgetState extends State<DateRangeSelectionWidget> {
                   children: [
                     TextSpan(
                       text: 'Select a date range to view ',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     TextSpan(
                       text: 'sales data',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.normal,
+                      ),
                     ),
                   ],
                 ),

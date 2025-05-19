@@ -43,7 +43,7 @@ class HomePage extends StatelessWidget {
             Text(
               shopName,
               style: const TextStyle(
-                fontSize: 26,
+                fontSize: 30,
                 fontWeight: FontWeight.bold,
                 color: headingFontColor,
               ),
@@ -61,7 +61,7 @@ class HomePage extends StatelessWidget {
                 backgroundColor: primaryColor,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 36,
-                  vertical: 18,
+                  vertical: 14,
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
