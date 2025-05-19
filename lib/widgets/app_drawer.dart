@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class AppDrawer extends StatelessWidget {
   final Function(String) onNavigate;
@@ -35,32 +36,51 @@ class AppDrawer extends StatelessWidget {
             ),
             ListTile(
               leading: const Icon(Icons.home_rounded),
-              title: const Text(
-                'Home',
-              ), // For Home
+              title: const Text('Home'), // For Home
               onTap: () => _handleTap(context, 'Home'),
             ),
-            
             ListTile(
-              leading: const Icon(Icons.category),
-              title: const Text(
-                'Categories',
-              ), // For adding/editing clothing categories
+              leading: SvgPicture.asset(
+                'assets/svgs/category.svg',
+                width: 24,
+                height: 24,
+                colorFilter: ColorFilter.mode(
+                  bottomNavigationBarUnselectedColor,
+                  BlendMode.srcIn,
+                ),
+              ),
+              title: const Text('Categories'),
               onTap: () => _handleTap(context, 'UpdateCategories'),
             ),
             ListTile(
-              leading: const Icon(Icons.edit),
-              title: const Text('Edit Bill'), // For updating bill by receipt ID
+              leading: SvgPicture.asset(
+                'assets/svgs/edit.svg',
+                width: 24,
+                height: 24,
+                colorFilter: ColorFilter.mode(
+                  bottomNavigationBarUnselectedColor,
+                  BlendMode.srcIn,
+                ),
+              ),
+              title: const Text('Edit Bill'),
               onTap: () => _handleTap(context, 'UpdateBills'),
             ),
             ListTile(
               leading: const Icon(Icons.pending_actions),
-              title: const Text('Unpaid Bills'), // For unpaid customer bills
+              title: const Text('Unpaid Bills'),
               onTap: () => _handleTap(context, 'History-Unpaid'),
             ),
             ListTile(
-              leading: const Icon(Icons.bar_chart),
-              title: const Text('Analytics'), // For analytics by date range
+              leading: SvgPicture.asset(
+                'assets/svgs/pie_chart.svg',
+                width: 24,
+                height: 24,
+                colorFilter: ColorFilter.mode(
+                  bottomNavigationBarUnselectedColor,
+                  BlendMode.srcIn,
+                ),
+              ),
+              title: const Text('Analytics'),
               onTap: () => _handleTap(context, 'Analytics'),
             ),
           ],

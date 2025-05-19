@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class BillActionButtons extends StatelessWidget {
   final VoidCallback onGeneratePressed;
@@ -16,13 +17,16 @@ class BillActionButtons extends StatelessWidget {
       children: [
         ElevatedButton.icon(
           onPressed: onGeneratePressed,
-          icon: const Icon(Icons.receipt_long, color: Colors.white),
+          icon: SvgPicture.asset(
+            'assets/svgs/printer.svg',
+            width: 24,
+            height: 24,
+            colorFilter: ColorFilter.mode(Colors.white, BlendMode.srcIn),
+          ),
+
           label: const Text(
             "Generate Bill",
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF1864c3),
@@ -38,10 +42,7 @@ class BillActionButtons extends StatelessWidget {
           icon: const Icon(Icons.share, color: Colors.white),
           label: const Text(
             "Share on WhatsApp",
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF25D366),

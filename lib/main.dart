@@ -4,7 +4,7 @@ import 'package:bill_generator/pages/search_bill_page.dart';
 import 'package:bill_generator/pages/shop_info_page.dart';
 import 'package:bill_generator/pages/range_dashboard_page.dart';
 import 'package:bill_generator/pages/reports_page.dart';
-import 'package:bill_generator/pages/splash_screen.dart';
+// Removed: import 'package:bill_generator/pages/splash_screen.dart';
 import 'package:bill_generator/services/company_profile_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -51,7 +51,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(seedColor: primaryColor),
       ),
-      home: const SplashWrapper(),
+      home: const MainScreen(), // 👈 Set MainScreen as the initial page
     );
   }
 }
@@ -158,13 +158,12 @@ class _MainScreenState extends State<MainScreen> {
         child: AppDrawer(onNavigate: _navigateToPage),
       ),
       body: bodyWidget,
-      bottomNavigationBar:
-          (_currentPage != 'CreateBill')
-              ? BottomNavBar(
-                selectedIndex: _selectedIndex,
-                onItemTapped: _onNavItemTapped,
-              )
-              : null,
+      bottomNavigationBar: (_currentPage != 'CreateBill')
+          ? BottomNavBar(
+              selectedIndex: _selectedIndex,
+              onItemTapped: _onNavItemTapped,
+            )
+          : null,
     );
   }
 }
