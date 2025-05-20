@@ -83,6 +83,7 @@ class PurchaseItem {
   final double price;
   final int quantity;
   final double total;
+  final int discount; //dicount percent
 
   PurchaseItem({
     required this.productCategory,
@@ -90,6 +91,7 @@ class PurchaseItem {
     required this.price,
     required this.quantity,
     required this.total,
+    this.discount = 10
   });
 
   factory PurchaseItem.fromMap(Map<String, dynamic> map) {
@@ -99,6 +101,7 @@ class PurchaseItem {
       price: (map['price'] ?? 0.0).toDouble(),
       quantity: (map['quantity'] ?? 0).toInt(),
       total: (map['total'] ?? 0.0).toDouble(),
+      discount: (map['discount'] ?? 0).toInt()
     );
   }
 
@@ -109,6 +112,7 @@ class PurchaseItem {
       'price': price,
       'quantity': quantity,
       'total': total,
+      'discount': discount
     };
   }
 
@@ -119,6 +123,7 @@ class PurchaseItem {
         'productName: $productName, '
         'price: $price, '
         'quantity: $quantity, '
+        'discount: $discount, '
         'total: $total'
         ')';
   }

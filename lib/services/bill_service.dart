@@ -1,5 +1,6 @@
 import 'package:bill_generator/models/Bill.dart';
 import 'package:bill_generator/models/ShopDetail.dart';
+import 'package:bill_generator/services/bill_summary.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
@@ -217,8 +218,11 @@ class BillService {
     try {
       // Step 1: Generate a unique receipt ID with daily counter
       String receiptId = await _generateReceiptId();
+      BillSummary summary = BillSummary.fromPurchases(bill.purchaseList);
+
 
       // Step 2: Prepare Firestore document data from Bill instance
+      print("purchse .ist ${bill.purchaseList}");
       Map<String, dynamic> firestoreData = {
         'receiptId': receiptId,
         'customerName': bill.customerName,
@@ -228,7 +232,7 @@ class BillService {
         ), // Store as Firestore Timestamp
         'payStatus': bill.payStatus,
         'paymentMethod': bill.paymentMethod,
-        'totalAmount': bill.amount,
+        'totalAmount': summary.netAmount,
         'purchaseList': bill.purchaseList.map((item) => item.toMap()).toList(),
         'timestamp': FieldValue.serverTimestamp(), // Optional created time
       };
@@ -315,8 +319,8 @@ class BillService {
     final String shopAddress = shopDetail.address;
     final String shopMobile = shopDetail.mobileNumber;
 
-    final double discount = bill.amount * 0.10;
-    final double netAmount = bill.amount - discount;
+    // Calculate summary using the helper
+    BillSummary summary = BillSummary.fromPurchases(bill.purchaseList);
 
     final styleNormal = pw.TextStyle(fontSize: 8);
     final styleBold = pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold);
@@ -333,12 +337,15 @@ class BillService {
       fontWeight: pw.FontWeight.bold,
     );
 
+    const double baseHeight =
+        60 * PdfPageFormat.mm; // fixed header/footer + summary + qr height
+    const double rowHeight = 25 * PdfPageFormat.mm; // per item row height
+    final int itemCount = bill.purchaseList.length;
+    final double totalHeight = baseHeight + (itemCount * rowHeight);
+
     pdf.addPage(
       pw.Page(
-        pageFormat: PdfPageFormat(
-          80 * PdfPageFormat.mm,
-          100 * PdfPageFormat.mm,
-        ),
+        pageFormat: PdfPageFormat(80 * PdfPageFormat.mm, totalHeight),
         build: (pw.Context context) {
           return pw.Padding(
             padding: pw.EdgeInsets.symmetric(horizontal: 5),
@@ -371,24 +378,25 @@ class BillService {
                 ),
                 pw.SizedBox(height: 6),
 
-                // === Table Header ===
+                // === Table Header with Discount Column ===
+                // === Table Header with shorter 'ITEM' column and wider discount ===
                 pw.Table(
                   border: pw.TableBorder(
                     top: pw.BorderSide(width: 0.5, color: PdfColors.black),
                     bottom: pw.BorderSide(width: 0.5, color: PdfColors.black),
                   ),
                   columnWidths: {
-                    0: pw.FlexColumnWidth(2),
+                    0: pw.FlexColumnWidth(1.5), // smaller width for ITEM
                     1: pw.FlexColumnWidth(1),
                     2: pw.FlexColumnWidth(1),
-                    3: pw.FlexColumnWidth(1),
+                    3: pw.FlexColumnWidth(1.2), // a bit wider discount
                   },
                   children: [
                     pw.TableRow(
                       children: [
                         pw.Padding(
                           padding: pw.EdgeInsets.all(4),
-                          child: pw.Text('DESCRIPTION', style: styleBold),
+                          child: pw.Text('ITEM', style: styleBold),
                         ),
                         pw.Padding(
                           padding: pw.EdgeInsets.all(4),
@@ -409,7 +417,7 @@ class BillService {
                         pw.Padding(
                           padding: pw.EdgeInsets.all(4),
                           child: pw.Text(
-                            'TOTAL',
+                            'DISCOUNT',
                             style: styleBold,
                             textAlign: pw.TextAlign.right,
                           ),
@@ -419,19 +427,19 @@ class BillService {
                   ],
                 ),
 
-                // === Item Rows ===
+                // === Item Rows with adjusted widths ===
                 pw.Table(
                   columnWidths: {
-                    0: pw.FlexColumnWidth(2),
+                    0: pw.FlexColumnWidth(1.5), // match header width
                     1: pw.FlexColumnWidth(1),
                     2: pw.FlexColumnWidth(1),
-                    3: pw.FlexColumnWidth(1),
+                    3: pw.FlexColumnWidth(1.2),
                   },
                   children: [
                     ...bill.purchaseList.map<pw.TableRow>((item) {
                       double price = item.price;
                       int qty = item.quantity;
-                      double total = price * qty;
+                      int discountPercent = item.discount; // assuming int %
 
                       return pw.TableRow(
                         children: [
@@ -461,7 +469,7 @@ class BillService {
                           pw.Padding(
                             padding: pw.EdgeInsets.all(4),
                             child: pw.Text(
-                              total.toStringAsFixed(2),
+                              '$discountPercent%',
                               style: styleNormal,
                               textAlign: pw.TextAlign.right,
                             ),
@@ -493,7 +501,7 @@ class BillService {
                         pw.Padding(
                           padding: pw.EdgeInsets.all(4),
                           child: pw.Text(
-                            bill.amount.toStringAsFixed(2),
+                            summary.subtotal.toStringAsFixed(2),
                             style: styleNormal,
                             textAlign: pw.TextAlign.right,
                           ),
@@ -504,12 +512,12 @@ class BillService {
                       children: [
                         pw.Padding(
                           padding: pw.EdgeInsets.all(4),
-                          child: pw.Text('Discount (10%)', style: styleNormal),
+                          child: pw.Text('Discount', style: styleNormal),
                         ),
                         pw.Padding(
                           padding: pw.EdgeInsets.all(4),
                           child: pw.Text(
-                            discount.toStringAsFixed(2),
+                            summary.totalDiscount.toStringAsFixed(2),
                             style: styleNormal,
                             textAlign: pw.TextAlign.right,
                           ),
@@ -539,7 +547,7 @@ class BillService {
                         pw.Padding(
                           padding: pw.EdgeInsets.all(4),
                           child: pw.Text(
-                            netAmount.toStringAsFixed(2),
+                            summary.netAmount.toStringAsFixed(2),
                             style: styleTotal,
                             textAlign: pw.TextAlign.right,
                           ),

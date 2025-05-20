@@ -48,6 +48,7 @@ dependencies:
   speech_to_text: ^7.0.0
   lottie: ^3.3.1
   flutter_svg: ^2.1.0
+  flutter_native_splash: ^2.4.6
 
 dev_dependencies:
   flutter_test:
@@ -67,6 +68,19 @@ flutter_icons:
   ios: true
   image_path: "assets/images/AppIconFF.png"
 
+flutter_native_splash:
+  color: "#ffffff"          # Background color for splash screen
+  image: assets/images/AppIcon.png  # Path to your splash image (put your image in assets folder)
+  android: true             # Generate splash for Android
+  ios: true                 # Generate splash for iOS
+  android_gravity: center   # How image aligns on Android (optional)
+  ios_content_mode: scaleAspectFill # Image content mode on iOS (optional)
+
+  android_12:
+    image: assets/images/AppIcon.png
+    icon_background_color: "#ffffff"
+
+  web: false
 # The following section is specific to Flutter packages.
 flutter:
 

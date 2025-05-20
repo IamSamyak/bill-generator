@@ -370,11 +370,11 @@ class _UpdateBillPageState extends State<UpdateBillPage> {
                 ),
               ),
               const SizedBox(height: 20),
-              OrderSummary(
-                total: total,
-                discount: discount,
-                finalAmount: finalAmount,
-              ),
+              // OrderSummary(
+              //   total: total,
+              //   discount: discount,
+              //   finalAmount: finalAmount,
+              // ),
               const SizedBox(height: 20),
               BillActionButtons(
                 onGeneratePressed: _viewPdf,

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:bill_generator/services/category_service.dart';
 import 'package:bill_generator/widgets/bill_action_buttons.dart';
 import 'package:bill_generator/widgets/pdf_viewer_modal.dart';
 import 'package:flutter/material.dart';
@@ -106,39 +107,14 @@ class _CreateBillPageState extends State<CreateBillPage> {
       return false;
     }
 
-    List<PurchaseItem> validItems = [];
-    for (var controllers in itemControllers) {
-      final type = controllers["productCategory"]!.text.trim();
-      final qtyText = controllers["quantity"]!.text.trim();
-      final priceText = controllers["price"]!.text.trim();
-
-      if (type.isNotEmpty && qtyText.isNotEmpty && priceText.isNotEmpty) {
-        final qty = int.tryParse(qtyText) ?? 0;
-        final price = double.tryParse(priceText) ?? 0.0;
-        if (qty > 0 && price > 0) {
-          validItems.add(
-            PurchaseItem(
-              productCategory: type,
-              productName:
-                  type, // or update if you have a different productName
-              quantity: qty,
-              price: price,
-              total: qty * price,
-            ),
-          );
-        }
-      }
-    }
-
+    List<PurchaseItem> validItems = _getPurchaseItems();
+    print("valid Items $validItems");
     if (validItems.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("❗ Please enter at least one valid item")),
       );
       return false;
     }
-
-    // Calculate total from PurchaseItem totals
-    double total = validItems.fold(0, (sum, item) => sum + item.total);
 
     final bill = Bill(
       receiptId: '',
@@ -147,7 +123,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
       date: DateTime.now(),
       payStatus: _payStatus,
       paymentMethod: "Cash",
-      amount: total,
+      amount: 0,
       purchaseList: validItems,
     );
 
@@ -228,103 +204,110 @@ class _CreateBillPageState extends State<CreateBillPage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final items =
-        itemControllers.map((c) {
-          return {
-            "price": double.tryParse(c["price"]!.text) ?? 0,
-            "quantity": int.tryParse(c["quantity"]!.text) ?? 0,
-          };
-        }).toList();
+  List<PurchaseItem> _getPurchaseItems() {
+  return itemControllers.map((controllers) {
+    final type = controllers["productCategory"]!.text.trim();
+    final qtyText = controllers["quantity"]!.text.trim();
+    final priceText = controllers["price"]!.text.trim();
 
-    final total = _calculateTotal(items);
-    final discount = total * 0.10;
+    if (type.isNotEmpty && qtyText.isNotEmpty && priceText.isNotEmpty) {
+      final qty = int.tryParse(qtyText) ?? 0;
+      final price = double.tryParse(priceText) ?? 0.0;
+      final category = CategoryService().getCategoryByLabel(type);
+      print("category ${category.discount}");
+      return PurchaseItem(
+        productCategory: type,
+        productName: type,
+        quantity: qty,
+        price: price,
+        discount: category.discount,
+        total: price * qty,
+      );
+    } else {
+      return null;
+    }
+  }).whereType<PurchaseItem>().toList();
+}
 
-    // Use finalAmount from state
-    finalAmount = total - discount;
 
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CustomerInputForm(
-              nameController: _nameController,
-              mobileController: _mobileController,
-              payStatus: _payStatus,
-              onPayStatusChanged: (value) {
-                if (value != null) {
-                  setState(() {
-                    _payStatus = value;
-                  });
+@override
+Widget build(BuildContext context) {
+  final purchaseItems = _getPurchaseItems();
+
+  return Padding(
+    padding: const EdgeInsets.all(16.0),
+    child: SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CustomerInputForm(
+            nameController: _nameController,
+            mobileController: _mobileController,
+            payStatus: _payStatus,
+            onPayStatusChanged: (value) {
+              if (value != null) {
+                setState(() {
+                  _payStatus = value;
+                });
+              }
+            },
+          ),
+          const Text(
+            "Items",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: inputLabelColor,
+            ),
+          ),
+          const SizedBox(height: 10),
+          ...itemControllers.asMap().entries.map((entry) {
+            int index = entry.key;
+            var controller = entry.value;
+            return ItemInputRow(
+              productCategoryController: controller["productCategory"]!,
+              quantityController: controller["quantity"]!,
+              priceController: controller["price"]!,
+              onRemove: () => _removeItem(index),
+              showRemoveIcon: itemControllers.length > 1,
+            );
+          }),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: GestureDetector(
+              onTap: () {
+                if (_canAddMore()) {
+                  _addItemControllers();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        "⚠️ Fill all fields before adding new item",
+                      ),
+                    ),
+                  );
                 }
               },
-            ),
-            const Text(
-              "Items",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: inputLabelColor,
+              child: const CircleAvatar(
+                backgroundColor: Color(0xFF0f58b9),
+                child: Icon(Icons.add, color: Colors.white),
               ),
             ),
-            const SizedBox(height: 10),
-            ...itemControllers.asMap().entries.map((entry) {
-              int index = entry.key;
-              var controller = entry.value;
-              return ItemInputRow(
-                productCategoryController: controller["productCategory"]!,
-                quantityController: controller["quantity"]!,
-                priceController: controller["price"]!,
-                onRemove: () => _removeItem(index),
-                showRemoveIcon: itemControllers.length > 1,
-              );
-            }),
-
-            const SizedBox(height: 10),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      if (_canAddMore()) {
-                        _addItemControllers();
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              "⚠️ Fill all fields before adding new item",
-                            ),
-                          ),
-                        );
-                      }
-                    },
-                    child: const CircleAvatar(
-                      backgroundColor: Color(0xFF0f58b9),
-                      child: Icon(Icons.add, color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            OrderSummary(
-              total: total,
-              discount: discount,
-              finalAmount: finalAmount,
-            ),
-            const SizedBox(height: 20),
-            BillActionButtons(
-              onGeneratePressed: _viewPdf,
-              onSharePressed: _shareOnWhatsApp,
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 20),
+          OrderSummary(
+            purchases: purchaseItems, // Computation done outside
+          ),
+          const SizedBox(height: 20),
+          BillActionButtons(
+            onGeneratePressed: _viewPdf,
+            onSharePressed: _shareOnWhatsApp,
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
+
 }
