@@ -1,7 +1,5 @@
 import 'package:bill_generator/models/ShopDetail.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:io';
 import '../services/company_profile_service.dart';
 import '../constants.dart';
 
@@ -13,7 +11,6 @@ class CompanyProfilePage extends StatefulWidget {
 }
 
 class _CompanyProfilePageState extends State<CompanyProfilePage> {
-  File? _pickedImage;
 
   final TextEditingController _shopNameController = TextEditingController();
   final TextEditingController _mobileNumberController = TextEditingController();
@@ -114,17 +111,6 @@ class _CompanyProfilePageState extends State<CompanyProfilePage> {
     );
   }
 
-  Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(
-      source: ImageSource.gallery,
-    );
-
-    if (pickedFile != null) {
-      setState(() {
-        _pickedImage = File(pickedFile.path);
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
