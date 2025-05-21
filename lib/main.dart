@@ -89,7 +89,11 @@ class _MainScreenState extends State<MainScreen> {
     _navigateToPage(page);
   }
 
-  void _navigateToPage(String page) {
+  void _navigateToPage(String page) async {
+    FocusScope.of(context).unfocus(); // Dismiss the keyboard
+
+    // Wait for keyboard to close (approx. 200ms - 300ms works well in practice)
+    await Future.delayed(const Duration(milliseconds: 300));
     setState(() {
       _currentPage = page;
       _selectedIndex = PageNavigationService.getNavIndexFromPage(page);
@@ -158,12 +162,13 @@ class _MainScreenState extends State<MainScreen> {
         child: AppDrawer(onNavigate: _navigateToPage),
       ),
       body: bodyWidget,
-      bottomNavigationBar: (_currentPage != 'CreateBill')
-          ? BottomNavBar(
-              selectedIndex: _selectedIndex,
-              onItemTapped: _onNavItemTapped,
-            )
-          : null,
+      bottomNavigationBar:
+          (_currentPage != 'CreateBill')
+              ? BottomNavBar(
+                selectedIndex: _selectedIndex,
+                onItemTapped: _onNavItemTapped,
+              )
+              : null,
     );
   }
 }

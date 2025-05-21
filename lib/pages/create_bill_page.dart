@@ -26,7 +26,6 @@ class _CreateBillPageState extends State<CreateBillPage> {
   final TextEditingController _mobileController = TextEditingController();
 
   String _payStatus = 'Paid';
-  bool _billUploadSuccess = false;
   String _receiptIdForBill = "";
   List<Map<String, TextEditingController>> itemControllers = [];
   final BillService _billService = BillService();
@@ -65,13 +64,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
 
     setState(() {});
   }
-
-  double _calculateTotal(List<Map<String, dynamic>> items) {
-    return items.fold(0.0, (sum, item) {
-      return sum + ((item["price"] ?? 0.0) * (item["quantity"] ?? 0));
-    });
-  }
-
+  
   bool _canAddMore() {
     final last = itemControllers.last;
     return last["productCategory"]!.text.isNotEmpty &&
@@ -108,7 +101,7 @@ class _CreateBillPageState extends State<CreateBillPage> {
     }
 
     List<PurchaseItem> validItems = _getPurchaseItems();
-    print("valid Items $validItems");
+    
     if (validItems.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("❗ Please enter at least one valid item")),
@@ -130,7 +123,6 @@ class _CreateBillPageState extends State<CreateBillPage> {
     String receiptId = await _billService.uploadBillToFirebase(bill);
 
     setState(() {
-      _billUploadSuccess = (receiptId != "");
       _receiptIdForBill = receiptId;
     });
     generatedPdf = await _billService.generatePdfAndSave(

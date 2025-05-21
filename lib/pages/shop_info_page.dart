@@ -19,8 +19,6 @@ class _CompanyProfilePageState extends State<CompanyProfilePage> {
   final TextEditingController _mobileNumberController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
 
-  final String defaultLogoUrl =
-      'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
   late CompanyProfileService _service;
 
   // Store existing fetched ShopDetail object
@@ -28,7 +26,6 @@ class _CompanyProfilePageState extends State<CompanyProfilePage> {
     shopName: 'John Doe',
     mobileNumber: '+91 9876543210',
     address: '123, Blue Street, Flutter City, Wonderland',
-    logo: '',
   );
 
   @override
@@ -61,7 +58,6 @@ class _CompanyProfilePageState extends State<CompanyProfilePage> {
           shopName: _shopNameController.text,
           mobileNumber: _mobileNumberController.text,
           address: _addressController.text,
-          logo: shopDetail.logo.isNotEmpty ? shopDetail.logo : defaultLogoUrl,
         );
       });
     } else {
@@ -74,7 +70,6 @@ class _CompanyProfilePageState extends State<CompanyProfilePage> {
           shopName: _existingDetails.shopName,
           mobileNumber: _existingDetails.mobileNumber,
           address: _existingDetails.address,
-          logo: defaultLogoUrl,
         );
       });
     }
@@ -93,18 +88,11 @@ class _CompanyProfilePageState extends State<CompanyProfilePage> {
         _addressController.text.trim().isNotEmpty
             ? _addressController.text.trim()
             : _existingDetails.address;
-    final logoUrl =
-        _pickedImage != null
-            ? 'gs://your-bucket-name/${_pickedImage!.path.split('/').last}'
-            : (_existingDetails.logo.isNotEmpty
-                ? _existingDetails.logo
-                : defaultLogoUrl);
 
     final updatedDetails = ShopDetail(
       shopName: shopName,
       mobileNumber: mobileNumber,
       address: address,
-      logo: logoUrl,
     );
 
     final success = await _service.uploadShopDetails(
@@ -146,59 +134,7 @@ class _CompanyProfilePageState extends State<CompanyProfilePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Stack(
-                children: [
-                  GestureDetector(
-                    onTap: _pickImage,
-                    child: Container(
-                      width: 180,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        color: Colors.grey.shade200,
-                        image: DecorationImage(
-                          image:
-                              _pickedImage != null
-                                  ? FileImage(_pickedImage!)
-                                  : NetworkImage(
-                                        _existingDetails.logo.isNotEmpty
-                                            ? _existingDetails.logo
-                                            : defaultLogoUrl,
-                                      )
-                                      as ImageProvider,
-                          fit: BoxFit.cover,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.3),
-                            blurRadius: 8,
-                            spreadRadius: 2,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 4,
-                    right: 4,
-                    child: CircleAvatar(
-                      radius: 14,
-                      backgroundColor: Colors.blue,
-                      child: Icon(Icons.add, color: Colors.white, size: 18),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 10),
-            Center(
-              child: Text(
-                "Tap on logo to change",
-                style: TextStyle(fontSize: 14, color: Colors.grey),
-              ),
-            ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 8),
 
             _buildLabel('Owner Name'),
             const SizedBox(height: 8),

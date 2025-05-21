@@ -77,7 +77,7 @@ flutter_native_splash:
   ios_content_mode: scaleAspectFill # Image content mode on iOS (optional)
 
   android_12:
-    image: assets/images/AppIcon.png
+    image: assets/images/AppIconL.png
     icon_background_color: "#ffffff"
 
   web: false
